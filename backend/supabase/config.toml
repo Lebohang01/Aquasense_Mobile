@@ -1,0 +1,47 @@
+# backend/supabase/config.toml
+# Supabase CLI configuration — run: supabase link --project-ref YOUR_REF
+
+[api]
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+file_size_limit = "50MiB"
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://aquasense-uj.expo.dev"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+# ── Scheduled jobs (pg_cron) ───────────────────────────
+# Add these via Supabase Studio → Database → Extensions → pg_cron
+# OR via SQL editor:
+#
+# SELECT cron.schedule(
+#   'daily-aggregation',
+#   '0 22 * * *',   -- 22:00 UTC = 00:00 SAST
+#   $$
+#     SELECT net.http_post(
+#       url := 'https://YOUR_PROJECT.supabase.co/functions/v1/daily-aggregation',
+#       headers := '{"Authorization": "Bearer YOUR_SERVICE_KEY"}'::jsonb
+#     );
+#   $$
+# );

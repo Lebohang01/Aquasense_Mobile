@@ -1,0 +1,69 @@
+{
+  "expo": {
+    "name": "AquaSense UJ",
+    "slug": "aquasense-uj",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "scheme": "aquasense-uj",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0e1a"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ac.za.uj.aquasense",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "AquaSense shows nearby water quality nodes on the campus map.",
+        "NSLocationAlwaysUsageDescription": "AquaSense uses location for the campus map."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0a0e1a"
+      },
+      "package": "ac.za.uj.aquasense",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#3b82f6",
+          "sounds": []
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "router": {
+      "ignoredRoutes": [
+        "components",
+        "hooks",
+        "lib",
+        "utils"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
