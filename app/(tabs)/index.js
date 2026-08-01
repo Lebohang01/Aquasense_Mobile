@@ -1,4 +1,6 @@
 // app/app/(tabs)/index.js — Dashboard with Realtime live updates
+import AlertSummary from '@/components/AlertSummary';
+import DailyReport  from '@/components/DailyReport';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
@@ -238,8 +240,13 @@ export default function DashboardScreen() {
               </View>
             ))}
           </View>
+          <View style={{ gap: 12, paddingHorizontal: 14, marginTop: 12 }}>
+              <AlertSummary />
+              <DailyReport />
+            </View>
         </View>
 
+        {/*History Button*/}
         <TouchableOpacity
           style={{
             backgroundColor:'rgba(59,130,246,0.1)',
@@ -263,6 +270,33 @@ export default function DashboardScreen() {
           </View>
           <Text style={{ fontSize:18, color:'#60a5fa' }}>›</Text>
         </TouchableOpacity>
+
+        {/*AI Button*/}
+        <TouchableOpacity
+            style={{
+              backgroundColor: 'rgba(139,92,246,0.1)',
+              borderRadius: 10,
+              padding: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: 8,
+              borderWidth: 1,
+              borderColor: 'rgba(139,92,246,0.25)',
+            }}
+            onPress={() => router.push('/ai-assistant')}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ fontSize: 16 }}>💧</Text>
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#f1f5f9' }}>Ask AquaAI</Text>
+                <Text style={{ fontSize: 11, color: '#475569', marginTop: 1 }}>
+                  AI water quality assistant with live data
+                </Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 18, color: '#a78bfa' }}>›</Text>
+          </TouchableOpacity>
 
         {/* Campus chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipsWrap} contentContainerStyle={{ paddingHorizontal: 14, gap: 6 }}>

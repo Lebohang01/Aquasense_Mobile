@@ -37,6 +37,8 @@ export default function RootLayout() {
             //<Stack.Screen name="community" options={{ animation: 'none' }} />
             <Stack.Screen name="admin" options={{ animation: 'none' }} />
             <Stack.Screen name="node/[id]" options={{ presentation: 'card' }} />
+            <Stack.Screen name="ai-assistant/index" options={{ presentation: 'modal' }}
+              />
           </Stack>
         </AuthGate>
       </SafeAreaProvider>
