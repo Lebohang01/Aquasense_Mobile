@@ -36,7 +36,12 @@
         "ACCESS_COARSE_LOCATION",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
-      ]
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAIYlCzZRBvmu-sN4pQG2ZU7o8wjVvtH8Y"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
