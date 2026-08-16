@@ -1,4 +1,4 @@
-{
+module.exports = {
   "expo": {
     "name": "AquaSense UJ",
     "slug": "aquasense-uj",
@@ -30,7 +30,7 @@
         "backgroundColor": "#0a0e1a"
       },
       "package": "ac.za.uj.aquasense",
-      "googleServicesFile": "./google-servicess.json",
+      "googleServicesFile": process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -69,3 +69,5 @@
     "owner": "lebohangmasalesa"
   }
 }
+
+
