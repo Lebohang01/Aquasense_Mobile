@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { evaluateReading, PARAMETER_UNITS, CAMPUS_LABELS } from '@/utils/sans241';
+import ImpactCard from '@/components/ImpactCard';
 
 const C = {
   bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
@@ -245,7 +246,10 @@ export default function DashboardScreen() {
               <DailyReport />
             </View>
         </View>
-
+        {/*Impact Card*/}
+        <View style={{ paddingHorizontal: 14, marginTop: 12 }}>
+          <ImpactCard />
+        </View>
         {/*History Button*/}
         <TouchableOpacity
           style={{

@@ -12,6 +12,9 @@ import { useReadingHistory }   from '@/hooks/useNodes';
 import { evaluateReading, PARAMETER_UNITS } from '@/utils/sans241';
 import { LineChart }           from '@/components/LineChart';
 import { formatDistanceToNow, format } from 'date-fns';
+import VerifyReading from '@/components/VerifyReading';
+import NodeAnomalyInsight from '@/components/NodeAnomalyInsight';
+import CheckInButton from '@/components/CheckInButton';
 
 const C = {
   bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
@@ -191,7 +194,12 @@ export default function NodeDetailScreen() {
             </Text>
           </View>
         )}
-
+        {/*Check in button*/}
+         <View style={{ gap: 12, paddingHorizontal: 14, marginTop: 12 }}>
+          <CheckInButton nodeId={node.node_id} nodeName={node.location_name} />
+          <VerifyReading nodeId={node.node_id} />
+          <NodeAnomalyInsight nodeId={node.node_id} locationName={node.location_name} />
+        </View>
         {/* Chart */}
         <View style={s.chartCard}>
           <View style={s.chartHeader}>
