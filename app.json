@@ -30,6 +30,7 @@
         "backgroundColor": "#0a0e1a"
       },
       "package": "ac.za.uj.aquasense",
+      "googleServicesFile": "./google-servicess.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",

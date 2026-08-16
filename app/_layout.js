@@ -18,14 +18,17 @@ function AuthGate({ children }) {
     else if (user && inAuth) router.replace('/(tabs)');
   }, [user, loading, segments]);
 
+  // Register push token once we actually have a logged-in user
+  useEffect(() => {
+    if (user) {
+      registerForPushNotifications().catch(() => {});
+    }
+  }, [user]);
+
   return children;
 }
 
 export default function RootLayout() {
-  useEffect(() => {
-    registerForPushNotifications().catch(() => {});
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -37,8 +40,7 @@ export default function RootLayout() {
             //<Stack.Screen name="community" options={{ animation: 'none' }} />
             <Stack.Screen name="admin" options={{ animation: 'none' }} />
             <Stack.Screen name="node/[id]" options={{ presentation: 'card' }} />
-            <Stack.Screen name="ai-assistant/index" options={{ presentation: 'modal' }}
-              />
+            <Stack.Screen name="ai-assistant/index" options={{ presentation: 'modal' }} />
           </Stack>
         </AuthGate>
       </SafeAreaProvider>
