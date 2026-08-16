@@ -10,7 +10,7 @@ node_modules/
 .env.local
 .env.production
 aquasense-uj-firebase-adminsdk-fbsvc-e269e7c364.json
-
+google-services.json
 
 # Android Studio
 .idea/
