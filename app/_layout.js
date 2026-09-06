@@ -1,11 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
 import { registerForPushNotifications } from '@/utils/messaging';
 import { supabase } from '@/lib/supabase';
+import LockScreen from '@/components/LockScreen';
+import { getBiometricPreference } from '@/lib/biometricAuth';
+
 
 function AuthGate({ children }) {
   const { user, loading } = useAuth();
@@ -42,6 +46,22 @@ function AuthGate({ children }) {
 }
 
 export default function RootLayout() {
+const [locked, setLocked] = useState(false);
+
+  useEffect(() => {
+    getBiometricPreference().then(enabled => setLocked(enabled));
+  }, []);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (state) => {
+      if (state === 'active') {
+        const enabled = await getBiometricPreference();
+        if (enabled) setLocked(true);
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -59,6 +79,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding/index" />
           </Stack>
         </AuthGate>
+         {locked && <LockScreen onUnlock={() => setLocked(false)} />}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

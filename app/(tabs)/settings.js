@@ -8,6 +8,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
+import { isBiometricAvailable, getBiometricPreference, setBiometricPreference } from '@/lib/biometricAuth';
 
 const C = {
   bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
@@ -105,19 +106,26 @@ export default function SettingsScreen() {
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [thresholds,   setThresholds]   = useState(DEFAULT_THRESHOLDS);
   const [showThresh,   setShowThresh]   = useState(false);
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioEnabled,   setBioEnabled]   = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('users').select('*').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data) {
-          setProfile(data);
-          setIsAdmin(data.role === 'admin');
-          setCampus(data.campus_preference || 'UJ APK');
-        }
-        setLoading(false);
-      });
-  }, [user]);
+useEffect(() => {
+  if (!user) return;
+  supabase.from('users').select('*').eq('id', user.id).single()
+    .then(({ data }) => {
+      if (data) {
+        setProfile(data);
+        setIsAdmin(data.role === 'admin');
+        setCampus(data.campus_preference || 'UJ APK');
+      }
+      setLoading(false);
+    });
+}, [user]);
+
+useEffect(() => {
+  isBiometricAvailable().then(setBioAvailable);
+  getBiometricPreference().then(setBioEnabled);
+}, []);
 
   const saveCampus = async (c) => {
     setCampus(c);
@@ -191,6 +199,28 @@ export default function SettingsScreen() {
           <Row icon="🔕" label="Critical Only Mode" subtitle="Suppress CAUTION notifications"
             right={<Switch value={criticalOnly} onValueChange={setCriticalOnly} trackColor={{ false:C.bg3, true:C.amber }} thumbColor="white"/>}/>
         </View>
+
+        {/* Biometrics toggle: */}
+        {bioAvailable && (
+          <>
+            <SectionLabel title="SECURITY" />
+            <View style={s.section}>
+              <Row icon="🔒" label="Face ID / Fingerprint Lock" subtitle="Require biometrics to open the app"
+                right={
+                  <Switch
+                    value={bioEnabled}
+                    onValueChange={async (val) => {
+                      setBioEnabled(val);
+                      await setBiometricPreference(val);
+                    }}
+                    trackColor={{ false: C.bg3, true: C.blue }}
+                    thumbColor="white"
+                  />
+                }
+              />
+            </View>
+          </>
+        )}
 
         {/* Thresholds */}
         <SectionLabel title="THRESHOLDS" />
