@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
 import { registerForPushNotifications } from '@/utils/messaging';
+import { supabase } from '@/lib/supabase';
 
 function AuthGate({ children }) {
   const { user, loading } = useAuth();
@@ -14,8 +15,20 @@ function AuthGate({ children }) {
   useEffect(() => {
     if (loading) return;
     const inAuth = segments[0] === '(auth)';
-    if (!user && !inAuth) router.replace('/(auth)/login');
-    else if (user && inAuth) router.replace('/(tabs)');
+
+    if (!user && !inAuth) {
+      router.replace('/(auth)/login');
+    } else if (user && inAuth) {
+      // Check onboarding status before deciding where to send them
+      supabase.from('users').select('has_seen_onboarding').eq('id', user.id).maybeSingle()
+        .then(({ data }) => {
+          if (data && !data.has_seen_onboarding) {
+            router.replace('/onboarding');
+          } else {
+            router.replace('/(tabs)');
+          }
+        });
+    }
   }, [user, loading, segments]);
 
   // Register push token once we actually have a logged-in user
@@ -37,11 +50,13 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="(auth)" />
-            //<Stack.Screen name="community" options={{ animation: 'none' }} />
+            {/* <Stack.Screen name="community" options={{ animation: 'none' }} /> */}
             <Stack.Screen name="admin" options={{ animation: 'none' }} />
             <Stack.Screen name="node/[id]" options={{ presentation: 'card' }} />
             <Stack.Screen name="ai-assistant/index" options={{ presentation: 'modal' }} />
             <Stack.Screen name="upgrade/index" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="leaderboard/index" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="onboarding/index" />
           </Stack>
         </AuthGate>
       </SafeAreaProvider>
