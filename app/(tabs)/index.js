@@ -23,6 +23,7 @@ const C = {
 function NodeCard({ node, onPress, refreshTick }) {
   const [latest,  setLatest]  = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null); // null = "not decided yet"
 
   // Re-fetch when parent tells us new data arrived (refreshTick changes)
   useEffect(() => {
@@ -46,9 +47,26 @@ function NodeCard({ node, onPress, refreshTick }) {
   }) : null;
   const isOnline = node.status === 'online';
 
+  // Smart default: auto-expand nodes with an issue, collapse healthy ones.
+  // Only decide this once per load, so user's manual toggle isn't overridden
+  // on every refresh.
+  useEffect(() => {
+    if (expanded === null && eval_) {
+      setExpanded(eval_.status !== 'SAFE');
+    } else if (expanded === null && !loading && !latest) {
+      setExpanded(true); // no data yet — show the "no readings" state openly
+    }
+  }, [eval_, loading, latest]);
+
+  const isExpanded = expanded === null ? false : expanded;
+
   return (
-    <TouchableOpacity style={s.nodeCard} onPress={onPress} activeOpacity={0.8}>
-      <View style={s.nodeHead}>
+    <View style={s.nodeCard}>
+      <TouchableOpacity
+        style={s.nodeHead}
+        onPress={() => setExpanded(!isExpanded)}
+        activeOpacity={0.7}
+      >
         <View style={{ flex: 1 }}>
           <Text style={s.nodeName}>{node.location_name}</Text>
           <Text style={s.nodeCampus}>{CAMPUS_LABELS[node.campus] || node.campus}</Text>
@@ -68,44 +86,52 @@ function NodeCard({ node, onPress, refreshTick }) {
             </View>
           )}
         </View>
-      </View>
+        <Text style={s.chevron}>{isExpanded ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
 
-      {loading ? (
-        <View style={s.loadingRow}>
-          <ActivityIndicator size="small" color={C.blue} />
-          <Text style={s.loadingTxt}>Loading...</Text>
-        </View>
-      ) : latest ? (
-        <View style={s.metricRow}>
-          {Object.entries(PARAMETER_UNITS).map(([key, meta]) => {
-            const val     = latest[key];
-            const display = typeof val === 'number'
-              ? (val > 99 ? Math.round(val) : val.toFixed(key === 'ph' ? 1 : 0))
-              : '—';
-            return (
-              <View key={key} style={s.metricItem}>
-                <Text style={{ fontSize: 16 }}>{meta.icon}</Text>
-                <Text style={s.metricVal}>{display}</Text>
-                <Text style={s.metricUnit}>{meta.unit || meta.label}</Text>
-              </View>
-            );
-          })}
-        </View>
-      ) : (
-        <View style={s.loadingRow}>
-          <Text style={s.loadingTxt}>No readings yet</Text>
+      {isExpanded && (
+        <View style={s.nodeBody}>
+          {loading ? (
+            <View style={s.loadingRow}>
+              <ActivityIndicator size="small" color={C.blue} />
+              <Text style={s.loadingTxt}>Loading...</Text>
+            </View>
+          ) : latest ? (
+            <View style={s.metricRow}>
+              {Object.entries(PARAMETER_UNITS).map(([key, meta]) => {
+                const val     = latest[key];
+                const display = typeof val === 'number'
+                  ? (val > 99 ? Math.round(val) : val.toFixed(key === 'ph' ? 1 : 0))
+                  : '—';
+                return (
+                  <View key={key} style={s.metricItem}>
+                    <Text style={{ fontSize: 16 }}>{meta.icon}</Text>
+                    <Text style={s.metricVal}>{display}</Text>
+                    <Text style={s.metricUnit}>{meta.unit || meta.label}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={s.loadingRow}>
+              <Text style={s.loadingTxt}>No readings yet</Text>
+            </View>
+          )}
+
+          {eval_?.issues?.length > 0 && (
+            <View style={[s.issueRow, { backgroundColor: eval_.bg }]}>
+              <Text style={[s.issueTxt, { color: eval_.color }]}>
+                {eval_.emoji} {eval_.issues.join(', ')} out of SANS 241 range
+              </Text>
+            </View>
+          )}
+
+          <TouchableOpacity onPress={onPress}>
+            <Text style={s.tapHint}>View full details →</Text>
+          </TouchableOpacity>
         </View>
       )}
-
-      {eval_?.issues?.length > 0 && (
-        <View style={[s.issueRow, { backgroundColor: eval_.bg }]}>
-          <Text style={[s.issueTxt, { color: eval_.color }]}>
-            {eval_.emoji} {eval_.issues.join(', ')} out of SANS 241 range
-          </Text>
-        </View>
-      )}
-      <Text style={s.tapHint}>Tap for details →</Text>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -117,6 +143,7 @@ export default function DashboardScreen() {
   const [alertCount,     setAlertCount]    = useState(0);
   const [selectedCampus, setSelectedCampus]= useState('All');
   const [error,          setError]         = useState(null);
+  const [showInsights,   setShowInsights]  = useState(true);
   // Increment this to tell NodeCards to re-fetch their latest reading
   const [refreshTick,    setRefreshTick]   = useState(0);
   const channelRef = useRef(null);
@@ -241,66 +268,66 @@ export default function DashboardScreen() {
               </View>
             ))}
           </View>
-          <View style={{ gap: 12, paddingHorizontal: 14, marginTop: 12 }}>
+        </View>
+
+        {/* Quick Actions — compact side-by-side row */}
+        <View style={s.quickActionsRow}>
+          <TouchableOpacity style={s.quickAction} onPress={() => router.push('/(tabs)/history')}>
+            <Text style={{ fontSize: 18 }}>📊</Text>
+            <Text style={s.quickActionTxt}>History</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.quickAction, s.quickActionPurple]} onPress={() => router.push('/ai-assistant')}>
+            <Text style={{ fontSize: 18 }}>💬</Text>
+            <Text style={[s.quickActionTxt, { color: '#a78bfa' }]}>Ask AquaAI</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Impact card */}
+        <View style={{ paddingHorizontal: 14, marginTop: 10 }}>
+          <ImpactCard />
+        </View>
+
+        {/* Subscription button */}
+       <TouchableOpacity
+         onPress={() => router.push('/upgrade')}
+         style={{
+           backgroundColor: 'rgba(167,139,250,0.1)',
+           borderRadius: 10,
+           padding: 12,
+           flexDirection: 'row',
+           alignItems: 'center',
+           justifyContent: 'center',
+           gap: 6,
+           borderWidth: 1,
+           borderColor: 'rgba(167,139,250,0.25)',
+           marginTop: 8,
+         }}
+       >
+         <Text style={{ fontSize: 13, fontWeight: '700', color: '#a78bfa' }}>
+           ✨ Upgrade to Premium
+         </Text>
+       </TouchableOpacity>
+
+        {/* AI Insights — collapsible section */}
+        <View style={{ paddingHorizontal: 14, marginTop: 14 }}>
+          <TouchableOpacity style={s.sectionHeader} onPress={() => setShowInsights(!showInsights)}>
+            <Text style={s.sectionTitle}>AI Insights</Text>
+            <Text style={s.sectionChevron}>{showInsights ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
+          {showInsights && (
+            <View style={{ gap: 12, marginTop: 8 }}>
               <AlertSummary />
               <DailyReport />
             </View>
+          )}
         </View>
-        {/*Impact Card*/}
-        <View style={{ paddingHorizontal: 14, marginTop: 12 }}>
-          <ImpactCard />
-        </View>
-        {/*History Button*/}
-        <TouchableOpacity
-          style={{
-            backgroundColor:'rgba(59,130,246,0.1)',
-            borderRadius:10,
-            padding:10,
-            flexDirection:'row',
-            alignItems:'center',
-            justifyContent:'space-between',
-            marginTop:12,
-            borderWidth:1,
-            borderColor:'rgba(59,130,246,0.25)',
-          }}
-          onPress={() => router.push('/(tabs)/history')}
-        >
-          <View style={{ flexDirection:'row', alignItems:'center', gap:8 }}>
-            <Text style={{ fontSize:16 }}>📊</Text>
-            <View>
-              <Text style={{ fontSize:13, fontWeight:'700', color:'#f1f5f9' }}>Readings History</Text>
-              <Text style={{ fontSize:11, color:'#475569', marginTop:1 }}>View timestamped logs & trends</Text>
-            </View>
-          </View>
-          <Text style={{ fontSize:18, color:'#60a5fa' }}>›</Text>
-        </TouchableOpacity>
 
-        {/*AI Button*/}
-        <TouchableOpacity
-            style={{
-              backgroundColor: 'rgba(139,92,246,0.1)',
-              borderRadius: 10,
-              padding: 10,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: 8,
-              borderWidth: 1,
-              borderColor: 'rgba(139,92,246,0.25)',
-            }}
-            onPress={() => router.push('/ai-assistant')}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 16 }}>💧</Text>
-              <View>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#f1f5f9' }}>Ask AquaAI</Text>
-                <Text style={{ fontSize: 11, color: '#475569', marginTop: 1 }}>
-                  AI water quality assistant with live data
-                </Text>
-              </View>
-            </View>
-            <Text style={{ fontSize: 18, color: '#a78bfa' }}>›</Text>
-          </TouchableOpacity>
+        {/* Monitoring Nodes section */}
+        <View style={{ paddingHorizontal: 14, marginTop: 18 }}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Monitoring Nodes ({filtered.length})</Text>
+          </View>
+        </View>
 
         {/* Campus chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chipsWrap} contentContainerStyle={{ paddingHorizontal: 14, gap: 6 }}>
@@ -329,7 +356,7 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Node cards */}
+        {/* Node cards — accordion, auto-expanded only if there's an issue */}
         <View style={{ padding: 14, gap: 10 }}>
           {loading ? (
             <View style={s.loadingCenter}>
@@ -359,7 +386,7 @@ export default function DashboardScreen() {
 
 const s = StyleSheet.create({
   safe:    { flex: 1, backgroundColor: C.bg0 },
-  hero:    { backgroundColor: '#0a1628', padding: 20, paddingBottom: 24 },
+  hero:    { backgroundColor: '#0a1628', padding: 20, paddingBottom: 20 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   logo:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
   logoIcon:{ width: 40, height: 40, backgroundColor: 'rgba(59,130,246,0.2)', borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)' },
@@ -372,6 +399,16 @@ const s = StyleSheet.create({
   statItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
   statVal:  { fontSize: 20, fontWeight: '700', color: '#f1f5f9' },
   statLbl:  { fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
+
+  quickActionsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, marginTop: 12 },
+  quickAction:     { flex: 1, backgroundColor: 'rgba(59,130,246,0.1)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(59,130,246,0.25)' },
+  quickActionPurple: { backgroundColor: 'rgba(139,92,246,0.1)', borderColor: 'rgba(139,92,246,0.25)' },
+  quickActionTxt:  { fontSize: 12, fontWeight: '700', color: '#60a5fa' },
+
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
+  sectionTitle:  { fontSize: 13, fontWeight: '700', color: C.text0 },
+  sectionChevron:{ fontSize: 11, color: C.text2 },
+
   chipsWrap:    { paddingVertical: 8 },
   chip:         { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: '#151c30', borderWidth: 1, borderColor: '#1e2d47' },
   chipActive:   { backgroundColor: 'rgba(59,130,246,0.2)', borderColor: 'rgba(59,130,246,0.5)' },
@@ -381,10 +418,13 @@ const s = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendTxt:  { fontSize: 11, fontWeight: '600' },
   legendNote: { fontSize: 10, color: '#475569', marginLeft: 'auto' },
-  nodeCard:   { backgroundColor: '#151c30', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: '#1e2d47' },
-  nodeHead:   { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
+
+  nodeCard:   { backgroundColor: '#151c30', borderRadius: 14, borderWidth: 1, borderColor: '#1e2d47', overflow: 'hidden' },
+  nodeHead:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 8 },
+  nodeBody:   { paddingHorizontal: 14, paddingBottom: 14 },
   nodeName:   { fontSize: 14, fontWeight: '700', color: '#f1f5f9' },
   nodeCampus: { fontSize: 11, color: '#475569', marginTop: 2 },
+  chevron:    { fontSize: 10, color: '#475569', marginLeft: 2 },
   onlinePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
   onlineDot:  { width: 5, height: 5, borderRadius: 3 },
   onlineTxt:  { fontSize: 10, fontWeight: '600' },
@@ -400,7 +440,7 @@ const s = StyleSheet.create({
   loadingCenterTxt: { fontSize: 14, color: '#475569' },
   issueRow: { borderRadius: 8, padding: 8, marginBottom: 6 },
   issueTxt: { fontSize: 11, fontWeight: '600' },
-  tapHint:  { fontSize: 10, color: '#475569', textAlign: 'right', marginTop: 2 },
+  tapHint:  { fontSize: 11, color: '#60a5fa', fontWeight: '600', textAlign: 'right', marginTop: 4 },
   empty:    { alignItems: 'center', padding: 48, gap: 10 },
   emptyTxt: { fontSize: 14, color: '#475569' },
   errorBox: { margin: 14, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)', alignItems: 'center', gap: 6 },

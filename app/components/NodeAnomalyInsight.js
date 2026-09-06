@@ -1,12 +1,14 @@
 // app/components/NodeAnomalyInsight.js
-// Trust & data quality: predictive anomaly narrative
+// Trust & data quality: predictive anomaly narrative (Premium feature)
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { getSubscriptionStatus } from '@/lib/subscription';
 
 const C = {
   bg2: '#151c30', bg3: '#1c2540',
-  blue: '#3b82f6', blueLight: '#60a5fa',
+  blue: '#3b82f6', blueLight: '#60a5fa', purple: '#a78bfa',
   green: '#22c55e', red: '#ef4444', amber: '#f59e0b',
   text0: '#f1f5f9', text1: '#94a3b8', text2: '#475569',
   border: '#1e2d47',
@@ -42,7 +44,7 @@ async function generateInsight(nodeId, locationName) {
       'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY || ''}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       max_tokens: 200,
       messages: [{
         role: 'user',
@@ -70,12 +72,22 @@ Respond in 1-2 sentences, plain English, no jargon. Start with either
 }
 
 export default function NodeAnomalyInsight({ nodeId, locationName }) {
+  const router = useRouter();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(null); // null = still checking
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      const status = await getSubscriptionStatus();
+      setIsPremium(status.isPremium);
+
+      if (!status.isPremium) {
+        setLoading(false);
+        return; // don't waste a Groq call if they can't see the result
+      }
+
       const res = await generateInsight(nodeId, locationName);
       setResult(res);
     } catch {
@@ -87,13 +99,32 @@ export default function NodeAnomalyInsight({ nodeId, locationName }) {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) {
+  if (loading || isPremium === null) {
     return (
       <View style={s.card}>
         <View style={s.loadingRow}>
           <ActivityIndicator size="small" color={C.blue} />
-          <Text style={s.loadingTxt}>Analysing 7-day trend...</Text>
+          <Text style={s.loadingTxt}>Loading...</Text>
         </View>
+      </View>
+    );
+  }
+
+  // Locked state — free tier sees a teaser, not the actual insight
+  if (!isPremium) {
+    return (
+      <View style={[s.card, s.cardLocked]}>
+        <View style={s.header}>
+          <Text style={s.title}>7-Day Trend Insight</Text>
+          <Text style={s.premiumBadge}>PREMIUM</Text>
+        </View>
+        <Text style={s.lockedTxt}>
+          🔒 Unlock predictive trend analysis for every node — spot problems
+          before they become UNSAFE alerts.
+        </Text>
+        <TouchableOpacity style={s.upgradeBtn} onPress={() => router.push('/upgrade')}>
+          <Text style={s.upgradeBtnTxt}>Upgrade to Premium</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -114,9 +145,14 @@ export default function NodeAnomalyInsight({ nodeId, locationName }) {
 const s = StyleSheet.create({
   card:        { backgroundColor: C.bg2, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 14 },
   cardFlagged: { borderColor: C.amber + '55', backgroundColor: 'rgba(245,158,11,0.06)' },
+  cardLocked:  { borderColor: C.purple + '55', backgroundColor: 'rgba(167,139,250,0.06)' },
   loadingRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   loadingTxt:  { fontSize: 12, color: C.text1 },
   header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   title:       { fontSize: 11, fontWeight: '700', color: C.text2, textTransform: 'uppercase', letterSpacing: 0.5 },
+  premiumBadge:{ fontSize: 9, fontWeight: '700', color: C.purple, backgroundColor: 'rgba(167,139,250,0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   insightTxt:  { fontSize: 13, color: C.text0, lineHeight: 19 },
+  lockedTxt:   { fontSize: 12, color: C.text1, lineHeight: 18, marginBottom: 10 },
+  upgradeBtn:  { backgroundColor: C.purple, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  upgradeBtnTxt: { fontSize: 12, fontWeight: '700', color: '#fff' },
 });

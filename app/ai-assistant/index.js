@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  FlatList, KeyboardAvoidingView, Platform, ActivityIndicator,
+  FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { checkAndConsumeAIMessage } from '@/lib/subscription';
 
 const C = {
   bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
@@ -104,6 +105,19 @@ export default function AIAssistantScreen() {
   const send = useCallback(async (text) => {
     const content = (text || input).trim();
     if (!content || loading) return;
+    // Check free-tier daily limit before doing anything else
+      const { allowed } = await checkAndConsumeAIMessage();
+      if (!allowed) {
+        Alert.alert(
+          'Daily limit reached',
+          "You've used all 5 free AI messages today. Upgrade to Premium for unlimited access.",
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'Upgrade', onPress: () => router.push('/upgrade') },
+          ]
+        );
+        return;
+      }
     setInput('');
     setShowSuggestions(false);
 
@@ -142,7 +156,7 @@ Keep responses concise (2-3 paragraphs max). Use plain English. If water is UNSA
           'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY || ''}`,
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'openai/gpt-oss-120b',
           max_tokens: 600,
           messages: [
             { role: 'system', content: systemPrompt },

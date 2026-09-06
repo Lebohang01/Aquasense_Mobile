@@ -56,7 +56,7 @@ async function generateSummary(alerts) {
       'Authorization': `Bearer ${process.env.EXPO_PUBLIC_GROQ_API_KEY || ''}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'openai/gpt-oss-120b',
       max_tokens: 300,
       messages: [{
         role: 'user',
