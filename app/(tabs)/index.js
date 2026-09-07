@@ -281,31 +281,33 @@ export default function DashboardScreen() {
             <Text style={[s.quickActionTxt, { color: '#a78bfa' }]}>Ask AquaAI</Text>
           </TouchableOpacity>
         </View>
-        {/*LeaderBoard button*/}
-        <TouchableOpacity
-          onPress={() => router.push('/leaderboard')}
-          style={{
-            backgroundColor: 'rgba(245,158,11,0.1)',
-            borderRadius: 10,
-            padding: 12,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            borderWidth: 1,
-            borderColor: 'rgba(245,158,11,0.25)',
-            marginTop: 8,
-          }}
-        >
-          <Text style={{ fontSize: 13, fontWeight: '700', color: '#f59e0b' }}>
-            🏆 Leaderboard
-          </Text>
-        </TouchableOpacity>
+
 
         {/* Impact card */}
         <View style={{ paddingHorizontal: 14, marginTop: 10 }}>
           <ImpactCard />
         </View>
+
+        {/*LeaderBoard button*/}
+                <TouchableOpacity
+                  onPress={() => router.push('/leaderboard')}
+                  style={{
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    borderRadius: 10,
+                    padding: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    borderWidth: 1,
+                    borderColor: 'rgba(245,158,11,0.25)',
+                    marginTop: 8,
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#f59e0b' }}>
+                    🏆 Leaderboard
+                  </Text>
+                </TouchableOpacity>
 
         {/* Subscription button */}
        <TouchableOpacity
