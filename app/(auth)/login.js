@@ -4,9 +4,10 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
   Platform, Alert, ScrollView, Animated, Easing,
-  LayoutAnimation, UIManager,
+  LayoutAnimation, UIManager, Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { C, STATUS } from '@/lib/theme';
@@ -14,6 +15,8 @@ import { C, STATUS } from '@/lib/theme';
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const { width: SCREEN_W } = Dimensions.get('window');
 
 const CAMPUSES = ['APK', 'APB', 'DFC', 'SWC'];
 const CAMPUS_FULL_NAME = { APK: 'UJ APK', APB: 'UJ APB', DFC: 'UJ DFC', SWC: 'UJ SWC' };
@@ -40,6 +43,88 @@ const STATUS_META = {
   UNKNOWN: { color: C.text2,              emoji: '·',  label: 'No data yet' },
 };
 
+const BUBBLES = [
+  { size: 8,  left: '10%', duration: 5200, delay: 0    },
+  { size: 5,  left: '22%', duration: 4200, delay: 900  },
+  { size: 10, left: '38%', duration: 6000, delay: 300  },
+  { size: 6,  left: '58%', duration: 4800, delay: 1500 },
+  { size: 7,  left: '74%', duration: 5500, delay: 600  },
+  { size: 5,  left: '88%', duration: 4400, delay: 1200 },
+];
+
+function RisingBubble({ size, left, duration, delay }) {
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(progress, { toValue: 1, duration, easing: Easing.linear, useNativeDriver: true }),
+        Animated.timing(progress, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -200] });
+  const translateX = progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 8, -4] });
+  const opacity = progress.interpolate({ inputRange: [0, 0.15, 0.8, 1], outputRange: [0, 0.5, 0.35, 0] });
+
+  return (
+    <Animated.View
+      style={{
+        position: 'absolute', bottom: 20, left,
+        width: size, height: size, borderRadius: size / 2,
+        backgroundColor: 'rgba(255,255,255,0.5)',
+        borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+        opacity, transform: [{ translateY }, { translateX }],
+      }}
+    />
+  );
+}
+
+function WaveLayer({ amplitude, phaseOffset, opacity, color, duration }) {
+  const sway = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(sway, { toValue: 1, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(sway, { toValue: 0, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  const translateX = sway.interpolate({ inputRange: [0, 1], outputRange: [-14 + phaseOffset, 14 + phaseOffset] });
+  const w = SCREEN_W;
+
+  return (
+    <Animated.View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, transform: [{ translateX }] }}>
+      <Svg width={w} height={28} viewBox={`0 0 ${w} 28`}>
+        <Path
+          d={`M0,14 Q${w * 0.25},${14 - amplitude} ${w * 0.5},14 T${w},14 V28 H0 Z`}
+          fill={color}
+          opacity={opacity}
+        />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+function PressScale({ children, onPress, style, disabled }) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const pressIn  = () => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, friction: 6 }).start();
+  const pressOut = () => Animated.spring(scale, { toValue: 1,    useNativeDriver: true, friction: 5 }).start();
+  return (
+    <TouchableOpacity activeOpacity={0.9} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} disabled={disabled}>
+      <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
+    </TouchableOpacity>
+  );
+}
+
 export default function LoginScreen() {
   const { signIn, signUp } = useAuth();
   const [mode,     setMode]     = useState('login');
@@ -55,41 +140,72 @@ export default function LoginScreen() {
   const passCheck = validatePassword(password);
 
   // ---------- Animations ----------
-  const dropletY   = useRef(new Animated.Value(0)).current;
-  const pulseScale = useRef(new Animated.Value(1)).current;
-  const pulseFade  = useRef(new Animated.Value(1)).current;
+  const dropletY     = useRef(new Animated.Value(0)).current;
+  const dropletScale = useRef(new Animated.Value(1)).current;
+  const glowScale     = useRef(new Animated.Value(1)).current;
+  const glowFade      = useRef(new Animated.Value(0.5)).current;
+  const ring1Scale = useRef(new Animated.Value(1)).current;
+  const ring1Fade  = useRef(new Animated.Value(1)).current;
+  const ring2Scale = useRef(new Animated.Value(1)).current;
+  const ring2Fade  = useRef(new Animated.Value(1)).current;
   const strengthAnim = useRef(new Animated.Value(0)).current;
   const statusFade  = useRef(new Animated.Value(0)).current;
   const statusScale = useRef(new Animated.Value(0.9)).current;
 
-  // Gentle droplet bob — evokes water without being distracting
+  // Floaty droplet — bob + gentle squash/stretch, like it's bobbing on water
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(dropletY, { toValue: -6, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(dropletY, { toValue: 0,  duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.parallel([
+          Animated.timing(dropletY,     { toValue: -10, duration: 1100, easing: Easing.out(Easing.sin), useNativeDriver: true }),
+          Animated.timing(dropletScale, { toValue: 1.06, duration: 1100, easing: Easing.out(Easing.sin), useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(dropletY,     { toValue: 0, duration: 1100, easing: Easing.in(Easing.sin), useNativeDriver: true }),
+          Animated.timing(dropletScale, { toValue: 0.96, duration: 1100, easing: Easing.in(Easing.sin), useNativeDriver: true }),
+        ]),
+        Animated.timing(dropletScale, { toValue: 1, duration: 150, useNativeDriver: true }),
       ])
     );
     loop.start();
     return () => loop.stop();
   }, []);
 
-  // "Live" pulse ring around the status dot
+  // Soft glow pulsing behind the droplet
   useEffect(() => {
     const loop = Animated.loop(
-      Animated.parallel([
-        Animated.sequence([
-          Animated.timing(pulseScale, { toValue: 1.8, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-          Animated.timing(pulseScale, { toValue: 1,   duration: 0,    useNativeDriver: true }),
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(glowScale, { toValue: 1.25, duration: 1300, useNativeDriver: true }),
+          Animated.timing(glowFade,  { toValue: 0.15, duration: 1300, useNativeDriver: true }),
         ]),
-        Animated.sequence([
-          Animated.timing(pulseFade, { toValue: 0, duration: 1200, easing: Easing.out(Easing.ease), useNativeDriver: true }),
-          Animated.timing(pulseFade, { toValue: 1, duration: 0,     useNativeDriver: true }),
+        Animated.parallel([
+          Animated.timing(glowScale, { toValue: 1, duration: 1300, useNativeDriver: true }),
+          Animated.timing(glowFade,  { toValue: 0.5, duration: 1300, useNativeDriver: true }),
         ]),
       ])
     );
     loop.start();
     return () => loop.stop();
+  }, []);
+
+  // Double sonar rings around the status dot, staggered for a livelier pulse
+  useEffect(() => {
+    const makeRing = (scaleV, fadeV, delay) => Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.timing(scaleV, { toValue: 2.2, duration: 1400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+          Animated.timing(fadeV,  { toValue: 0,   duration: 1400, easing: Easing.out(Easing.ease), useNativeDriver: true }),
+        ]),
+        Animated.timing(scaleV, { toValue: 1, duration: 0, useNativeDriver: true }),
+        Animated.timing(fadeV,  { toValue: 1, duration: 0, useNativeDriver: true }),
+      ])
+    );
+    const l1 = makeRing(ring1Scale, ring1Fade, 0);
+    const l2 = makeRing(ring2Scale, ring2Fade, 700);
+    l1.start(); l2.start();
+    return () => { l1.stop(); l2.stop(); };
   }, []);
 
   // Password strength bar fills like a rising water level
@@ -182,9 +298,15 @@ export default function LoginScreen() {
 
           {/* Hero */}
           <View style={s.hero}>
-            <Animated.View style={[s.logoWrap, { transform: [{ translateY: dropletY }] }]}>
-              <View style={s.logoIcon}><Text style={{ fontSize:44 }}>💧</Text></View>
-            </Animated.View>
+            {BUBBLES.map((b, i) => <RisingBubble key={i} {...b} />)}
+
+            <View style={s.glowWrap}>
+              <Animated.View style={[s.glow, { opacity: glowFade, transform: [{ scale: glowScale }] }]} />
+              <Animated.View style={[s.logoWrap, { transform: [{ translateY: dropletY }, { scale: dropletScale }] }]}>
+                <View style={s.logoIcon}><Text style={{ fontSize:44 }}>💧</Text></View>
+              </Animated.View>
+            </View>
+
             <Text style={s.appName}>AquaSense UJ</Text>
             <Text style={s.tagline}>SANS 241:2015 Water Quality Monitor</Text>
 
@@ -192,13 +314,9 @@ export default function LoginScreen() {
             <Text style={s.safetyLabel}>Check water safety at your campus</Text>
             <View style={s.campusPickRow}>
               {CAMPUSES.map(c => (
-                <TouchableOpacity
-                  key={c}
-                  style={[s.campusPickChip, campus === c && s.campusPickChipActive]}
-                  onPress={() => setCampus(c)}
-                >
+                <PressScale key={c} onPress={() => setCampus(c)} style={[s.campusPickChip, campus === c && s.campusPickChipActive]}>
                   <Text style={[s.campusPickTxt, campus === c && s.campusPickTxtActive]}>{c}</Text>
-                </TouchableOpacity>
+                </PressScale>
               ))}
             </View>
 
@@ -208,7 +326,8 @@ export default function LoginScreen() {
               ) : (
                 <Animated.View style={[s.statusBadge, { opacity: statusFade, transform: [{ scale: statusScale }] }]}>
                   <View style={s.dotWrap}>
-                    <Animated.View style={[s.pulseDot, { backgroundColor: sm.color, opacity: pulseFade, transform: [{ scale: pulseScale }] }]} />
+                    <Animated.View style={[s.pulseRing, { borderColor: sm.color, opacity: ring1Fade, transform: [{ scale: ring1Scale }] }]} />
+                    <Animated.View style={[s.pulseRing, { borderColor: sm.color, opacity: ring2Fade, transform: [{ scale: ring2Scale }] }]} />
                     <View style={[s.dot, { backgroundColor: sm.color }]} />
                   </View>
                   <Text style={[s.statusTxt, { color: sm.color }]}>{sm.emoji} {sm.label}</Text>
@@ -217,6 +336,10 @@ export default function LoginScreen() {
             </View>
 
             <Text style={s.heroDesc}>Real-time drinking water monitoring across UJ campuses</Text>
+
+            {/* Gently swaying water-surface line where the hero meets the form */}
+            <WaveLayer amplitude={5}  phaseOffset={0}  opacity={0.10} color="#ffffff" duration={3200} />
+            <WaveLayer amplitude={7}  phaseOffset={10} opacity={0.06} color="#ffffff" duration={4000} />
           </View>
 
           {/* Form */}
@@ -224,13 +347,11 @@ export default function LoginScreen() {
             {/* Mode toggle */}
             <View style={s.modeToggle}>
               {['login','signup'].map(m => (
-                <TouchableOpacity key={m}
-                  style={[s.modeBtn, mode===m && s.modeBtnActive]}
-                  onPress={() => switchMode(m)}>
+                <PressScale key={m} onPress={() => switchMode(m)} style={[s.modeBtn, mode===m && s.modeBtnActive]}>
                   <Text style={[s.modeBtnTxt, mode===m && s.modeBtnTxtActive]}>
                     {m === 'login' ? 'Sign In' : 'Sign Up'}
                   </Text>
-                </TouchableOpacity>
+                </PressScale>
               ))}
             </View>
 
@@ -243,7 +364,7 @@ export default function LoginScreen() {
               <Text style={s.inputLabel}>{mode === 'signup' ? 'UJ Student Email' : 'Email'}</Text>
               <TextInput
                 style={s.input}
-                placeholder={mode === 'signup' ? 'e.g. 123456789@student.uj.ac.za' : '123456789@student.uj.ac.za'}
+                placeholder={mode === 'signup' ? 'e.g. 12345678@student.uj.ac.za' : 'student@example.com'}
                 placeholderTextColor={C.text2}
                 value={email} onChangeText={setEmail}
                 autoCapitalize="none" keyboardType="email-address"
@@ -298,16 +419,14 @@ export default function LoginScreen() {
               )}
             </View>
 
-            <TouchableOpacity
-              style={[s.submitBtn, loading && s.submitBtnDisabled]}
-              onPress={handleAuth} disabled={loading} activeOpacity={0.85}>
+            <PressScale onPress={handleAuth} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
               {loading
                 ? <ActivityIndicator color="white" />
                 : <Text style={s.submitBtnTxt}>
                     {mode === 'login' ? 'Sign In →' : 'Create Account →'}
                   </Text>
               }
-            </TouchableOpacity>
+            </PressScale>
 
             <View style={s.noteBox}>
               <Text style={s.noteTxt}>
@@ -325,8 +444,11 @@ export default function LoginScreen() {
 
 const s = StyleSheet.create({
   safe:      { flex:1, backgroundColor:C.bg0 },
-  hero:      { backgroundColor:C.navy, padding:32, paddingTop:40, alignItems:'center' },
-  logoWrap:  { marginBottom:20 },
+  hero:      { backgroundColor:C.navy, padding:32, paddingTop:40, alignItems:'center', overflow:'hidden', position:'relative' },
+
+  glowWrap:  { width:88, height:88, alignItems:'center', justifyContent:'center', marginBottom:20 },
+  glow:      { position:'absolute', width:100, height:100, borderRadius:50, backgroundColor:'rgba(94,195,239,0.5)' },
+  logoWrap:  { width:88, height:88, alignItems:'center', justifyContent:'center' },
   logoIcon:  { width:88, height:88, backgroundColor:'rgba(255,255,255,0.12)', borderRadius:26, alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:'rgba(255,255,255,0.18)' },
   appName:   { fontSize:30, fontWeight:'700', color:'#ffffff', letterSpacing:-0.8, marginBottom:6 },
   tagline:   { fontSize:13, color:'rgba(255,255,255,0.6)', marginBottom:22 },
@@ -342,10 +464,10 @@ const s = StyleSheet.create({
   statusBadge: { flexDirection:'row', alignItems:'center', gap:8, backgroundColor:'rgba(255,255,255,0.08)', borderRadius:20, paddingHorizontal:14, paddingVertical:6, borderWidth:1, borderColor:'rgba(255,255,255,0.12)' },
   dotWrap:     { width:10, height:10, alignItems:'center', justifyContent:'center' },
   dot:         { width:8, height:8, borderRadius:4, position:'absolute' },
-  pulseDot:    { width:8, height:8, borderRadius:4, position:'absolute' },
+  pulseRing:   { width:8, height:8, borderRadius:4, borderWidth:1, position:'absolute' },
   statusTxt:   { fontSize:12, fontWeight:'700' },
 
-  heroDesc:  { fontSize:13, color:'rgba(255,255,255,0.5)', textAlign:'center' },
+  heroDesc:  { fontSize:13, color:'rgba(255,255,255,0.5)', textAlign:'center', marginBottom:8 },
 
   form:      { backgroundColor:C.bg1, borderTopLeftRadius:28, borderTopRightRadius:28, padding:28, paddingBottom:40, flex:1, borderTopWidth:1, borderTopColor:C.border },
   modeToggle:{ flexDirection:'row', backgroundColor:C.bg3, borderRadius:12, padding:3, marginBottom:20, borderWidth:1, borderColor:C.border },
