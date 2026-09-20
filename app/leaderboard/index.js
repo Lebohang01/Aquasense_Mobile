@@ -4,12 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  bg0: '#0a0e1a', bg1: '#0f1525', bg2: '#151c30', bg3: '#1c2540',
-  blue: '#3b82f6', blueLight: '#60a5fa', amber: '#f59e0b', purple: '#a78bfa',
-  text0: '#f1f5f9', text1: '#94a3b8', text2: '#475569', border: '#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
@@ -116,15 +111,15 @@ export default function LeaderboardScreen() {
 const s = StyleSheet.create({
   safe:       { flex: 1, backgroundColor: C.bg0 },
   header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: C.bg1, borderBottomWidth: 1, borderBottomColor: C.border },
-  backTxt:    { fontSize: 14, fontWeight: '600', color: C.blueLight, width: 50 },
+  backTxt:    { fontSize: 14, fontWeight: '600', color: C.blue, width: 50 },
   headerTitle:{ fontSize: 16, fontWeight: '700', color: C.text0 },
   tabs:       { flexDirection: 'row', gap: 8, padding: 14 },
   tab:        { flex: 1, backgroundColor: C.bg2, borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: C.border },
-  tabActive:  { backgroundColor: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.4)' },
-  tabTxt:     { fontSize: 13, fontWeight: '600', color: C.text1 },
-  tabTxtActive: { color: C.blueLight },
+  tabActive:  { backgroundColor: 'rgba(15,160,223,0.12)', borderColor: 'rgba(15,160,223,0.4)' },
+  tabTxt:     { fontSize: 13, fontWeight: '600', color: C.text2 },
+  tabTxtActive: { color: C.blue },
   row:        { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.bg2, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: C.border },
-  rowMe:      { borderColor: C.purple + '77', backgroundColor: 'rgba(167,139,250,0.08)' },
+  rowMe:      { borderColor: C.purple + '77', backgroundColor: 'rgba(124,58,237,0.06)' },
   rankWrap:   { width: 28, alignItems: 'center' },
   rankTxt:    { fontSize: 14, fontWeight: '700', color: C.text2 },
   name:       { flex: 1, fontSize: 14, fontWeight: '600', color: C.text0 },

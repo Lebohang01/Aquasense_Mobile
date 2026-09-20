@@ -3,12 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  bg2: '#151c30', bg3: '#1c2540',
-  blue: '#3b82f6', blueLight: '#60a5fa', green: '#22c55e', amber: '#f59e0b',
-  text0: '#f1f5f9', text1: '#94a3b8', text2: '#475569', border: '#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 // Rough estimate: each check-in represents one refill instead of buying
 // a bottled water — used purely for a motivating, illustrative stat

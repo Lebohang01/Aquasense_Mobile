@@ -3,10 +3,10 @@ import { View,Text,FlatList,TouchableOpacity,StyleSheet,TextInput,ActivityIndica
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { format, isToday, isYesterday } from 'date-fns';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+import { C } from '@/lib/theme';
 
-const C={bg0:'#0a0e1a',bg1:'#0f1525',bg2:'#151c30',bg3:'#1c2540',blue:'#3b82f6',blueLight:'#60a5fa',green:'#22c55e',red:'#ef4444',text0:'#f1f5f9',text1:'#94a3b8',text2:'#475569',border:'#1e2d47'};
 function strColor(s){const c=['#1e3a5f','#1a3d2e','#2e1a5a','#3d2e0a','#0a2e3d','#2e0a2e'];let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);return c[Math.abs(h)%c.length];}
 function fmtTime(d){const dt=new Date(d);if(isToday(dt))return format(dt,'HH:mm');if(isYesterday(dt))return`Yesterday ${format(dt,'HH:mm')}`;return format(dt,'MMM d, HH:mm');}
 
@@ -90,7 +90,7 @@ export default function ChatScreen() {
     );
   };
 
-  if(loading)return(<SafeAreaView style={s.safe} edges={['top']}><View style={s.header}><TouchableOpacity onPress={()=>router.back()}><Text style={s.back}>←</Text></TouchableOpacity></View><ActivityIndicator color="#3b82f6" style={{marginTop:40}}/></SafeAreaView>);
+  if(loading)return(<SafeAreaView style={s.safe} edges={['top']}><View style={s.header}><TouchableOpacity onPress={()=>router.back()}><Text style={s.back}>←</Text></TouchableOpacity></View><ActivityIndicator color={C.blue} style={{marginTop:40}}/></SafeAreaView>);
 
   return(
     <SafeAreaView style={s.safe} edges={['top']}>
@@ -126,35 +126,35 @@ export default function ChatScreen() {
 }
 
 const s=StyleSheet.create({
-  safe:{flex:1,backgroundColor:'#0a0e1a'},
-  header:{backgroundColor:'#0f1525',paddingHorizontal:12,paddingVertical:10,flexDirection:'row',alignItems:'center',gap:10,borderBottomWidth:1,borderBottomColor:'#1e2d47'},
-  back:{fontSize:20,color:'#60a5fa',fontWeight:'600'},
+  safe:{flex:1,backgroundColor:C.bg0},
+  header:{backgroundColor:C.bg1,paddingHorizontal:12,paddingVertical:10,flexDirection:'row',alignItems:'center',gap:10,borderBottomWidth:1,borderBottomColor:C.border},
+  back:{fontSize:20,color:C.blue,fontWeight:'600'},
   hAv:{width:38,height:38,borderRadius:19,alignItems:'center',justifyContent:'center'},
   hAvTxt:{fontSize:14,fontWeight:'700',color:'white'},
-  hName:{fontSize:15,fontWeight:'700',color:'#f1f5f9'},hMeta:{fontSize:11,color:'#475569',marginTop:1},
-  onlineDot:{width:8,height:8,borderRadius:4,backgroundColor:'#22c55e',marginRight:4},
+  hName:{fontSize:15,fontWeight:'700',color:C.text0},hMeta:{fontSize:11,color:C.text2,marginTop:1},
+  onlineDot:{width:8,height:8,borderRadius:4,backgroundColor:C.green,marginRight:4},
   dateDivider:{flexDirection:'row',alignItems:'center',gap:10,marginVertical:16},
-  dateLine:{flex:1,height:1,backgroundColor:'#1e2d47'},
-  dateLabel:{fontSize:11,color:'#475569',fontWeight:'600'},
+  dateLine:{flex:1,height:1,backgroundColor:C.border},
+  dateLabel:{fontSize:11,color:C.text2,fontWeight:'600'},
   msgRow:{flexDirection:'row',alignItems:'flex-end',gap:8,marginBottom:6},
   msgRowMine:{flexDirection:'row-reverse'},
   msgAv:{width:28,height:28,borderRadius:14,alignItems:'center',justifyContent:'center',flexShrink:0},
   msgAvTxt:{fontSize:11,fontWeight:'700',color:'white'},
   bubble:{maxWidth:'78%',borderRadius:18,paddingHorizontal:14,paddingVertical:10},
-  bubbleMine:{backgroundColor:'#3b82f6',borderBottomRightRadius:4},
-  bubbleTheirs:{backgroundColor:'#151c30',borderBottomLeftRadius:4,borderWidth:1,borderColor:'#1e2d47'},
-  bubbleTxt:{fontSize:14,color:'#94a3b8',lineHeight:20},
+  bubbleMine:{backgroundColor:C.blue,borderBottomRightRadius:4},
+  bubbleTheirs:{backgroundColor:C.bg2,borderBottomLeftRadius:4,borderWidth:1,borderColor:C.border},
+  bubbleTxt:{fontSize:14,color:C.text1,lineHeight:20},
   bubbleTxtMine:{color:'white'},
   msgMeta:{flexDirection:'row',alignItems:'center',gap:4,marginTop:4,justifyContent:'flex-end'},
-  msgTime:{fontSize:10,color:'#475569'},msgTimeMine:{color:'rgba(255,255,255,0.6)'},
-  tick:{fontSize:10,color:'rgba(255,255,255,0.7)'},
+  msgTime:{fontSize:10,color:C.text2},msgTimeMine:{color:'rgba(255,255,255,0.75)'},
+  tick:{fontSize:10,color:'rgba(255,255,255,0.85)'},
   emptyChat:{flex:1,alignItems:'center',justifyContent:'center',padding:40,gap:10},
   emptyChatAv:{width:80,height:80,borderRadius:40,alignItems:'center',justifyContent:'center',marginBottom:8},
-  emptyChatName:{fontSize:20,fontWeight:'700',color:'#f1f5f9'},
-  emptyChatEmail:{fontSize:13,color:'#475569'},
-  emptyChatHint:{fontSize:13,color:'#475569',textAlign:'center',lineHeight:20,marginTop:8},
-  inputBar:{flexDirection:'row',alignItems:'flex-end',gap:8,padding:10,backgroundColor:'#0f1525',borderTopWidth:1,borderTopColor:'#1e2d47'},
-  input:{flex:1,backgroundColor:'#151c30',borderRadius:22,paddingHorizontal:16,paddingVertical:10,fontSize:14,color:'#f1f5f9',maxHeight:120,borderWidth:1,borderColor:'#1e2d47'},
-  sendBtn:{width:42,height:42,backgroundColor:'#3b82f6',borderRadius:21,alignItems:'center',justifyContent:'center',flexShrink:0},
+  emptyChatName:{fontSize:20,fontWeight:'700',color:C.text0},
+  emptyChatEmail:{fontSize:13,color:C.text2},
+  emptyChatHint:{fontSize:13,color:C.text2,textAlign:'center',lineHeight:20,marginTop:8},
+  inputBar:{flexDirection:'row',alignItems:'flex-end',gap:8,padding:10,backgroundColor:C.bg1,borderTopWidth:1,borderTopColor:C.border},
+  input:{flex:1,backgroundColor:C.bg2,borderRadius:22,paddingHorizontal:16,paddingVertical:10,fontSize:14,color:C.text0,maxHeight:120,borderWidth:1,borderColor:C.border},
+  sendBtn:{width:42,height:42,backgroundColor:C.blue,borderRadius:21,alignItems:'center',justifyContent:'center',flexShrink:0},
   sendBtnOff:{opacity:0.35},sendTxt:{fontSize:20,fontWeight:'700',color:'white',lineHeight:24},
 });

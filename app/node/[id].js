@@ -15,17 +15,10 @@ import { formatDistanceToNow, format } from 'date-fns';
 import VerifyReading from '@/components/VerifyReading';
 import NodeAnomalyInsight from '@/components/NodeAnomalyInsight';
 import CheckInButton from '@/components/CheckInButton';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa', cyan:'#06b6d4',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b', purple:'#8b5cf6',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C, STATUS } from '@/lib/theme';
 
 const METRIC_COLORS = {
-  ph:'#3b82f6', tds:'#f59e0b', turbidity:'#8b5cf6', temperature:'#06b6d4',
+  ph:C.blue, tds:C.amber, turbidity:C.purple, temperature:C.cyan,
 };
 
 const CHART_RANGES = [
@@ -36,9 +29,9 @@ const CHART_RANGES = [
 
 function MetricBlock({ metricKey, value, meta, status }) {
   const ss = {
-    good:     { color:'#4ade80', bg:'rgba(34,197,94,0.12)'  },
-    warning:  { color:'#fbbf24', bg:'rgba(245,158,11,0.12)' },
-    critical: { color:'#f87171', bg:'rgba(239,68,68,0.12)'  },
+    good:     { color: STATUS.SAFE.color,    bg: STATUS.SAFE.bg    },
+    warning:  { color: STATUS.CAUTION.color, bg: STATUS.CAUTION.bg },
+    critical: { color: STATUS.UNSAFE.color,  bg: STATUS.UNSAFE.bg  },
   }[status] || { color:C.text1, bg:C.bg3 };
 
   const display = typeof value === 'number'
@@ -224,7 +217,7 @@ export default function NodeDetailScreen() {
             {Object.entries(PARAMETER_UNITS).map(([key, meta]) => (
               <TouchableOpacity
                 key={key}
-                style={[s.metricTab, chartMetric===key && { backgroundColor:METRIC_COLORS[key]+'25', borderColor:METRIC_COLORS[key] }]}
+                style={[s.metricTab, chartMetric===key && { backgroundColor:METRIC_COLORS[key]+'20', borderColor:METRIC_COLORS[key] }]}
                 onPress={() => setChartMetric(key)}
               >
                 <Text style={{ fontSize:13 }}>{meta.icon}</Text>
@@ -319,7 +312,7 @@ const s = StyleSheet.create({
   safe:          { flex:1, backgroundColor:C.bg0 },
   header:        { backgroundColor:C.bg1, paddingHorizontal:14, paddingVertical:12, flexDirection:'row', alignItems:'center', gap:10, borderBottomWidth:1, borderBottomColor:C.border },
   backBtn:       { paddingHorizontal:8, paddingVertical:4 },
-  backTxt:       { fontSize:14, fontWeight:'600', color:C.blueLight },
+  backTxt:       { fontSize:14, fontWeight:'600', color:C.blue },
   headerTitle:   { fontSize:16, fontWeight:'700', color:C.text0 },
   headerSub:     { fontSize:11, color:C.text2, marginTop:1 },
   statusPill:    { paddingHorizontal:10, paddingVertical:4, borderRadius:20, flexShrink:0 },
@@ -340,11 +333,11 @@ const s = StyleSheet.create({
   chartCard:    { marginHorizontal:14, marginBottom:12, backgroundColor:C.bg2, borderRadius:14, padding:14, borderWidth:1, borderColor:C.border },
   chartHeader:  { flexDirection:'row', justifyContent:'space-between', alignItems:'center', marginBottom:12 },
   chartTitle:   { fontSize:14, fontWeight:'700', color:C.text0 },
-  rangeTabs:    { flexDirection:'row', gap:4, backgroundColor:C.bg1, borderRadius:8, padding:2 },
+  rangeTabs:    { flexDirection:'row', gap:4, backgroundColor:C.bg3, borderRadius:8, padding:2 },
   rangeTab:     { paddingHorizontal:10, paddingVertical:4, borderRadius:6 },
-  rangeTabActive:{ backgroundColor:C.bg3 },
+  rangeTabActive:{ backgroundColor:C.bg1 },
   rangeTabTxt:  { fontSize:11, fontWeight:'600', color:C.text2 },
-  rangeTabTxtActive:{ color:C.blueLight },
+  rangeTabTxtActive:{ color:C.blue },
   metricTab:    { flexDirection:'row', alignItems:'center', gap:4, paddingHorizontal:10, paddingVertical:5, borderRadius:20, backgroundColor:C.bg3, borderWidth:1, borderColor:C.border },
   metricTabTxt: { fontSize:11, fontWeight:'600', color:C.text1 },
   chartFooter:  { flexDirection:'row', justifyContent:'space-between', marginTop:8 },

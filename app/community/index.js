@@ -6,26 +6,18 @@ import { useRouter } from 'expo-router';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { C, CATEGORIES } from '@/lib/theme';
 
-const C = { bg0:'#0a0e1a',bg1:'#0f1525',bg2:'#151c30',bg3:'#1c2540',blue:'#3b82f6',blueLight:'#60a5fa',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',text0:'#f1f5f9',text1:'#94a3b8',text2:'#475569',border:'#1e2d47' };
 const CATS = [
-  {value:'all',label:'All',emoji:'🌊'},{value:'general',label:'General',emoji:'💬'},
+  {value:'all',label:'All Posts',emoji:'🌊'},{value:'general',label:'General',emoji:'💬'},
   {value:'water_quality',label:'Water Quality',emoji:'💧'},{value:'alert',label:'Alert',emoji:'🚨'},
   {value:'resolved',label:'Resolved',emoji:'✅'},{value:'tip',label:'Tip',emoji:'💡'},
   {value:'question',label:'Question',emoji:'❓'},
 ];
-const CAT_STYLES = {
-  general:{color:'#60a5fa',bg:'rgba(59,130,246,0.15)',emoji:'💬'},
-  water_quality:{color:'#06b6d4',bg:'rgba(6,182,212,0.15)',emoji:'💧'},
-  alert:{color:'#f87171',bg:'rgba(239,68,68,0.15)',emoji:'🚨'},
-  resolved:{color:'#4ade80',bg:'rgba(34,197,94,0.15)',emoji:'✅'},
-  tip:{color:'#fbbf24',bg:'rgba(245,158,11,0.15)',emoji:'💡'},
-  question:{color:'#a78bfa',bg:'rgba(139,92,246,0.15)',emoji:'❓'},
-};
 function strColor(s){const cols=['#1e3a5f','#1a3d2e','#2e1a5a','#3d2e0a','#0a2e3d','#2e0a2e'];let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);return cols[Math.abs(h)%cols.length];}
 
 function PostCard({ post, onPress, onLike, userId }) {
-  const cat = CAT_STYLES[post.category]||CAT_STYLES.general;
+  const cat = CATEGORIES[post.category]||CATEGORIES.general;
   return (
     <TouchableOpacity style={[s.card,post.is_pinned&&s.pinned]} onPress={onPress} activeOpacity={0.85}>
       {post.is_pinned&&<View style={s.pinnedBadge}><Text style={s.pinnedTxt}>📌 Pinned</Text></View>}
@@ -134,7 +126,7 @@ export default function CommunityScreen() {
         <TextInput style={s.searchInput} placeholder="Search posts..." placeholderTextColor={C.text2} value={search} onChangeText={setSearch}/>
         {search.length>0&&<TouchableOpacity onPress={()=>setSearch('')}><Text style={{color:C.text2,fontSize:16}}>✕</Text></TouchableOpacity>}
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chips} contentContainerStyle={{paddingHorizontal:14,gap:6}}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chips} contentContainerStyle={{paddingHorizontal:14,gap:6,alignItems:'center',}}>
         {CATS.map(c=>(
           <TouchableOpacity key={c.value} style={[s.chip,cat===c.value&&s.chipActive]} onPress={()=>setCat(c.value)}>
             <Text style={[s.chipTxt,cat===c.value&&s.chipTxtActive]}>{c.emoji} {c.label}</Text>
@@ -161,41 +153,41 @@ export default function CommunityScreen() {
 }
 
 const s=StyleSheet.create({
-  safe:{flex:1,backgroundColor:'#0a0e1a'},
-  header:{backgroundColor:'#0f1525',paddingHorizontal:16,paddingVertical:14,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderBottomWidth:1,borderBottomColor:'#1e2d47'},
-  headerTitle:{fontSize:18,fontWeight:'700',color:'#f1f5f9'},headerSub:{fontSize:11,color:'#475569',marginTop:2},
+  safe:{flex:1,backgroundColor:C.bg0},
+  header:{backgroundColor:C.bg1,paddingHorizontal:16,paddingVertical:14,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderBottomWidth:1,borderBottomColor:C.border},
+  headerTitle:{fontSize:18,fontWeight:'700',color:C.text0},headerSub:{fontSize:11,color:C.text2,marginTop:2},
   headerBtns:{flexDirection:'row',gap:8,alignItems:'center'},
-  msgBtn:{width:38,height:38,backgroundColor:'#151c30',borderRadius:10,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'#1e2d47',position:'relative'},
-  unreadBadge:{position:'absolute',top:-4,right:-4,backgroundColor:'#ef4444',borderRadius:8,minWidth:16,height:16,alignItems:'center',justifyContent:'center',paddingHorizontal:3},
+  msgBtn:{width:38,height:38,backgroundColor:C.bg3,borderRadius:10,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:C.border,position:'relative'},
+  unreadBadge:{position:'absolute',top:-4,right:-4,backgroundColor:C.red,borderRadius:8,minWidth:16,height:16,alignItems:'center',justifyContent:'center',paddingHorizontal:3},
   unreadTxt:{fontSize:9,fontWeight:'700',color:'white'},
-  newPostBtn:{backgroundColor:'#3b82f6',borderRadius:10,paddingHorizontal:14,paddingVertical:7},
+  newPostBtn:{backgroundColor:C.blue,borderRadius:10,paddingHorizontal:14,paddingVertical:7},
   newPostTxt:{fontSize:13,fontWeight:'700',color:'white'},
-  searchBar:{flexDirection:'row',alignItems:'center',gap:8,margin:10,marginBottom:4,backgroundColor:'#151c30',borderRadius:10,padding:10,borderWidth:1,borderColor:'#1e2d47'},
-  searchInput:{flex:1,fontSize:13,color:'#f1f5f9'},
-  chips:{paddingVertical:8,maxHeight:48},
-  chip:{paddingHorizontal:12,paddingVertical:5,borderRadius:20,backgroundColor:'#151c30',borderWidth:1,borderColor:'#1e2d47'},
-  chipActive:{backgroundColor:'rgba(59,130,246,0.2)',borderColor:'rgba(59,130,246,0.5)'},
-  chipTxt:{fontSize:12,fontWeight:'600',color:'#94a3b8'},chipTxtActive:{color:'#60a5fa'},
-  card:{backgroundColor:'#151c30',borderRadius:14,padding:14,borderWidth:1,borderColor:'#1e2d47'},
-  pinned:{borderColor:'rgba(245,158,11,0.4)'},
-  pinnedBadge:{backgroundColor:'rgba(245,158,11,0.15)',borderRadius:6,paddingHorizontal:8,paddingVertical:3,alignSelf:'flex-start',marginBottom:8},
-  pinnedTxt:{fontSize:11,fontWeight:'600',color:'#f59e0b'},
+  searchBar:{flexDirection:'row',alignItems:'center',gap:8,margin:10,marginBottom:4,backgroundColor:C.bg2,borderRadius:10,padding:10,borderWidth:1,borderColor:C.border},
+  searchInput:{flex:1,fontSize:13,color:C.text0},
+  chips:{paddingVertical:8,minHeight:48},
+  chip:{paddingHorizontal:12,paddingVertical:5,borderRadius:20,backgroundColor:C.bg3,borderWidth:1,borderColor:C.border,flexShrink:0,alignSelf:'flex-start'},
+  chipActive:{backgroundColor:'rgba(15,160,223,0.15)',borderColor:'rgba(15,160,223,0.5)'},
+  chipTxt:{fontSize:12,fontWeight:'600',color:C.text2},chipTxtActive:{color:C.blue, fontWeight:'600',},
+  card:{backgroundColor:C.bg2,borderRadius:14,padding:14,borderWidth:1,borderColor:C.border},
+  pinned:{borderColor:'rgba(217,119,6,0.4)'},
+  pinnedBadge:{backgroundColor:'rgba(217,119,6,0.12)',borderRadius:6,paddingHorizontal:8,paddingVertical:3,alignSelf:'flex-start',marginBottom:8},
+  pinnedTxt:{fontSize:11,fontWeight:'600',color:C.amber},
   cardHead:{flexDirection:'row',alignItems:'center',gap:10,marginBottom:10},
   av:{width:36,height:36,borderRadius:18,alignItems:'center',justifyContent:'center'},
   avTxt:{fontSize:14,fontWeight:'700',color:'white'},
-  author:{fontSize:13,fontWeight:'600',color:'#f1f5f9'},meta:{fontSize:11,color:'#475569',marginTop:1},
+  author:{fontSize:13,fontWeight:'600',color:C.text0},meta:{fontSize:11,color:C.text2,marginTop:1},
   catBadge:{paddingHorizontal:8,paddingVertical:3,borderRadius:8},catTxt:{fontSize:10,fontWeight:'700'},
-  postTitle:{fontSize:15,fontWeight:'700',color:'#f1f5f9',marginBottom:6,lineHeight:21},
-  postBody:{fontSize:13,color:'#94a3b8',lineHeight:19,marginBottom:8},
-  nodeTag:{backgroundColor:'#1c2540',borderRadius:8,paddingHorizontal:10,paddingVertical:5,alignSelf:'flex-start',marginBottom:10},
-  nodeTagTxt:{fontSize:11,color:'#60a5fa',fontWeight:'500'},
-  actions:{flexDirection:'row',gap:16,paddingTop:10,borderTopWidth:1,borderTopColor:'#1e2d47'},
+  postTitle:{fontSize:15,fontWeight:'700',color:C.text0,marginBottom:6,lineHeight:21},
+  postBody:{fontSize:13,color:C.text1,lineHeight:19,marginBottom:8},
+  nodeTag:{backgroundColor:C.bg3,borderRadius:8,paddingHorizontal:10,paddingVertical:5,alignSelf:'flex-start',marginBottom:10},
+  nodeTagTxt:{fontSize:11,color:C.blue,fontWeight:'500'},
+  actions:{flexDirection:'row',gap:16,paddingTop:10,borderTopWidth:1,borderTopColor:C.border},
   likeBtn:{flexDirection:'row',alignItems:'center',gap:4},
-  likeTxt:{fontSize:12,color:'#475569',fontWeight:'500'},
+  likeTxt:{fontSize:12,color:C.text2,fontWeight:'500'},
   commentBtn:{flexDirection:'row',alignItems:'center',gap:4},
-  commentTxt:{fontSize:12,color:'#475569',fontWeight:'500'},
-  viewBtn:{marginLeft:'auto'},viewTxt:{fontSize:12,color:'#60a5fa',fontWeight:'600'},
-  empty:{alignItems:'center',paddingTop:60,gap:12},emptyTxt:{fontSize:16,color:'#475569'},
-  emptyBtn:{backgroundColor:'#3b82f6',borderRadius:10,paddingHorizontal:20,paddingVertical:10},
+  commentTxt:{fontSize:12,color:C.text2,fontWeight:'500'},
+  viewBtn:{marginLeft:'auto'},viewTxt:{fontSize:12,color:C.blue,fontWeight:'600'},
+  empty:{alignItems:'center',paddingTop:60,gap:12},emptyTxt:{fontSize:16,color:C.text2},
+  emptyBtn:{backgroundColor:C.blue,borderRadius:10,paddingHorizontal:20,paddingVertical:10},
   emptyBtnTxt:{fontSize:13,fontWeight:'700',color:'white'},
 });

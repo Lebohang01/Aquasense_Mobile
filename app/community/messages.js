@@ -5,8 +5,8 @@ import { useRouter } from 'expo-router';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { C } from '@/lib/theme';
 
-const C={bg0:'#0a0e1a',bg1:'#0f1525',bg2:'#151c30',blue:'#3b82f6',blueLight:'#60a5fa',green:'#22c55e',red:'#ef4444',text0:'#f1f5f9',text1:'#94a3b8',text2:'#475569',border:'#1e2d47'};
 function strColor(s){const c=['#1e3a5f','#1a3d2e','#2e1a5a','#3d2e0a','#0a2e3d','#2e0a2e'];let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);return c[Math.abs(h)%c.length];}
 
 export default function MessagesScreen() {
@@ -109,25 +109,25 @@ export default function MessagesScreen() {
 }
 
 const s=StyleSheet.create({
-  safe:{flex:1,backgroundColor:'#0a0e1a'},
-  header:{backgroundColor:'#0f1525',padding:14,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:'#1e2d47'},
-  back:{fontSize:14,fontWeight:'600',color:'#60a5fa'},title:{fontSize:16,fontWeight:'700',color:'#f1f5f9'},
-  searchBar:{flexDirection:'row',alignItems:'center',gap:8,margin:10,marginBottom:4,backgroundColor:'#151c30',borderRadius:10,padding:10,borderWidth:1,borderColor:'#1e2d47'},
-  searchInput:{flex:1,fontSize:13,color:'#f1f5f9'},
-  tabs:{flexDirection:'row',backgroundColor:'#0f1525',borderBottomWidth:1,borderBottomColor:'#1e2d47'},
-  tab:{flex:1,paddingVertical:12,alignItems:'center'},tabActive:{borderBottomWidth:2,borderBottomColor:'#3b82f6'},
-  tabTxt:{fontSize:13,fontWeight:'500',color:'#475569'},tabTxtActive:{color:'#60a5fa',fontWeight:'700'},
-  convoCard:{backgroundColor:'#151c30',borderRadius:12,padding:12,flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderColor:'#1e2d47'},
-  convoUnread:{borderColor:'rgba(59,130,246,0.4)'},
+  safe:{flex:1,backgroundColor:C.bg0},
+  header:{backgroundColor:C.bg1,padding:14,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:C.border},
+  back:{fontSize:14,fontWeight:'600',color:C.blue},title:{fontSize:16,fontWeight:'700',color:C.text0},
+  searchBar:{flexDirection:'row',alignItems:'center',gap:8,margin:10,marginBottom:4,backgroundColor:C.bg2,borderRadius:10,padding:10,borderWidth:1,borderColor:C.border},
+  searchInput:{flex:1,fontSize:13,color:C.text0},
+  tabs:{flexDirection:'row',backgroundColor:C.bg1,borderBottomWidth:1,borderBottomColor:C.border},
+  tab:{flex:1,paddingVertical:12,alignItems:'center'},tabActive:{borderBottomWidth:2,borderBottomColor:C.blue},
+  tabTxt:{fontSize:13,fontWeight:'500',color:C.text2},tabTxtActive:{color:C.blue,fontWeight:'700'},
+  convoCard:{backgroundColor:C.bg2,borderRadius:12,padding:12,flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderColor:C.border},
+  convoUnread:{borderColor:'rgba(15,160,223,0.4)'},
   av:{width:44,height:44,borderRadius:22,alignItems:'center',justifyContent:'center',flexShrink:0},
   avTxt:{fontSize:16,fontWeight:'700',color:'white'},
   convoHead:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:3},
-  convoName:{fontSize:14,fontWeight:'700',color:'#f1f5f9'},convoTime:{fontSize:10,color:'#475569'},
-  convoPreview:{fontSize:12,color:'#475569'},convoPreviewUnread:{color:'#94a3b8',fontWeight:'600'},
-  unreadBadge:{backgroundColor:'#3b82f6',borderRadius:10,minWidth:20,height:20,alignItems:'center',justifyContent:'center',paddingHorizontal:5},
+  convoName:{fontSize:14,fontWeight:'700',color:C.text0},convoTime:{fontSize:10,color:C.text2},
+  convoPreview:{fontSize:12,color:C.text2},convoPreviewUnread:{color:C.text1,fontWeight:'600'},
+  unreadBadge:{backgroundColor:C.blue,borderRadius:10,minWidth:20,height:20,alignItems:'center',justifyContent:'center',paddingHorizontal:5},
   unreadTxt:{fontSize:10,fontWeight:'700',color:'white'},
-  userCard:{backgroundColor:'#151c30',borderRadius:12,padding:12,flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderColor:'#1e2d47'},
-  userName:{fontSize:14,fontWeight:'700',color:'#f1f5f9'},
-  userEmail:{fontSize:11,color:'#475569',marginTop:1},userMeta:{fontSize:11,color:'#60a5fa',marginTop:2},
-  empty:{alignItems:'center',paddingTop:60,gap:10},emptyTxt:{fontSize:14,color:'#475569'},emptyHint:{fontSize:12,color:'#475569',textAlign:'center'},
+  userCard:{backgroundColor:C.bg2,borderRadius:12,padding:12,flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderColor:C.border},
+  userName:{fontSize:14,fontWeight:'700',color:C.text0},
+  userEmail:{fontSize:11,color:C.text2,marginTop:1},userMeta:{fontSize:11,color:C.blue,marginTop:2},
+  empty:{alignItems:'center',paddingTop:60,gap:10},emptyTxt:{fontSize:14,color:C.text2},emptyHint:{fontSize:12,color:C.text2,textAlign:'center'},
 });

@@ -4,13 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { getSubscriptionStatus, mockSubscribeToPremium, mockCancelPremium, FREE_TIER_DAILY_AI_LIMIT } from '@/lib/subscription';
-
-const C = {
-  bg0: '#0a0e1a', bg1: '#0f1525', bg2: '#151c30', bg3: '#1c2540',
-  blue: '#3b82f6', blueLight: '#60a5fa', purple: '#a78bfa',
-  green: '#22c55e', amber: '#f59e0b',
-  text0: '#f1f5f9', text1: '#94a3b8', text2: '#475569', border: '#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 const PREMIUM_FEATURES = [
   { icon: '💬', title: 'Unlimited AI chat', desc: `Free tier is capped at ${FREE_TIER_DAILY_AI_LIMIT} messages/day` },
@@ -133,7 +127,7 @@ export default function UpgradeScreen() {
 
 const s = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: C.bg0 },
-  demoBanner:{ backgroundColor: 'rgba(245,158,11,0.1)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)', borderRadius: 10, padding: 10, marginBottom: 20 },
+  demoBanner:{ backgroundColor: 'rgba(217,119,6,0.08)', borderWidth: 1, borderColor: 'rgba(217,119,6,0.3)', borderRadius: 10, padding: 10, marginBottom: 20 },
   demoBannerTxt: { fontSize: 11, color: C.amber, textAlign: 'center' },
   hero:      { fontSize: 40, textAlign: 'center' },
   title:     { fontSize: 22, fontWeight: '700', color: C.text0, textAlign: 'center', marginTop: 8 },

@@ -7,14 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b', purple:'#8b5cf6', cyan:'#06b6d4',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C, STATUS } from '@/lib/theme';
 
 const METRICS = [
   { key:'ph',          label:'pH',          unit:'',     color:C.blue,   icon:'⚗️',  safe:[5.0,9.7]   },
@@ -30,9 +23,9 @@ const RANGES = [
 ];
 
 const STATUS_STYLE = {
-  SAFE:    { color:C.green,  bg:'rgba(34,197,94,0.15)',  emoji:'✅' },
-  CAUTION: { color:C.amber,  bg:'rgba(245,158,11,0.15)', emoji:'⚠️' },
-  UNSAFE:  { color:C.red,    bg:'rgba(239,68,68,0.15)',  emoji:'🚨' },
+  SAFE:    { color: STATUS.SAFE.color,    bg: STATUS.SAFE.bg,    emoji:'✅' },
+  CAUTION: { color: STATUS.CAUTION.color, bg: STATUS.CAUTION.bg, emoji:'⚠️' },
+  UNSAFE:  { color: STATUS.UNSAFE.color,  bg: STATUS.UNSAFE.bg,  emoji:'🚨' },
 };
 
 function formatDate(dateStr) {
@@ -174,7 +167,7 @@ export default function HistoryScreen() {
         {METRICS.map(m => (
           <TouchableOpacity
             key={m.key}
-            style={[s.metricChip, metric===m.key && { backgroundColor:m.color+'25', borderColor:m.color }]}
+            style={[s.metricChip, metric===m.key && { backgroundColor:m.color+'20', borderColor:m.color }]}
             onPress={() => setMetric(m.key)}
           >
             <Text style={{ fontSize:14 }}>{m.icon}</Text>
@@ -203,7 +196,7 @@ export default function HistoryScreen() {
               <Text style={s.statLbl}>Max</Text>
             </View>
             <View style={s.statItem}>
-              <Text style={[s.statVal, { color:C.blueLight }]}>{stats.count}</Text>
+              <Text style={[s.statVal, { color:C.blue }]}>{stats.count}</Text>
               <Text style={s.statLbl}>Readings</Text>
             </View>
           </View>
@@ -263,7 +256,7 @@ const s = StyleSheet.create({
   header:       { backgroundColor:C.bg1, paddingHorizontal:16, paddingVertical:14, flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderBottomWidth:1, borderBottomColor:C.border },
   headerTitle:  { fontSize:18, fontWeight:'700', color:C.text0 },
   headerSub:    { fontSize:11, color:C.text2, marginTop:2 },
-  rangeTabs:    { flexDirection:'row', backgroundColor:C.bg2, borderRadius:10, padding:2, borderWidth:1, borderColor:C.border },
+  rangeTabs:    { flexDirection:'row', backgroundColor:C.bg3, borderRadius:10, padding:2, borderWidth:1, borderColor:C.border },
   rangeTab:     { paddingHorizontal:12, paddingVertical:5, borderRadius:8 },
   rangeTabActive:{ backgroundColor:C.blue },
   rangeTabTxt:  { fontSize:12, fontWeight:'600', color:C.text2 },
@@ -280,9 +273,9 @@ const s = StyleSheet.create({
   statsNote:    { fontSize:11, color:C.text2 },
   nodeFilter:   { paddingVertical:8, maxHeight:48 },
   nodeChip:     { paddingHorizontal:12, paddingVertical:5, borderRadius:20, backgroundColor:C.bg2, borderWidth:1, borderColor:C.border },
-  nodeChipActive:{ backgroundColor:'rgba(59,130,246,0.2)', borderColor:'rgba(59,130,246,0.5)' },
+  nodeChipActive:{ backgroundColor:'rgba(15,160,223,0.15)', borderColor:'rgba(15,160,223,0.5)' },
   nodeChipTxt:  { fontSize:11, fontWeight:'600', color:C.text1 },
-  nodeChipTxtActive:{ color:C.blueLight },
+  nodeChipTxtActive:{ color:C.blue },
   recentLabel:  { fontSize:10, fontWeight:'700', color:C.text2, textTransform:'uppercase', letterSpacing:0.8, paddingHorizontal:16, paddingVertical:8 },
   empty:        { alignItems:'center', paddingTop:60, gap:10 },
   emptyTxt:     { fontSize:15, color:C.text2 },

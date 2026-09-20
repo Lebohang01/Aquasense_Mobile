@@ -8,14 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter }  from 'expo-router';
 import { supabase }   from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C, STATUS } from '@/lib/theme';
 
 const PARAM_LABELS = {
   ph:          { label:'pH',          unit:'',     icon:'⚗️', limit:'5.0–9.7' },
@@ -25,8 +18,8 @@ const PARAM_LABELS = {
 };
 
 const STATUS_STYLE = {
-  UNSAFE:  { color:'#f87171', bg:'rgba(239,68,68,0.15)',  emoji:'🚨' },
-  CAUTION: { color:'#fbbf24', bg:'rgba(245,158,11,0.15)', emoji:'⚠️' },
+  UNSAFE:  { color: STATUS.UNSAFE.color,  bg: STATUS.UNSAFE.bg,  emoji:'🚨' },
+  CAUTION: { color: STATUS.CAUTION.color, bg: STATUS.CAUTION.bg, emoji:'⚠️' },
 };
 
 function AlertCard({ alert, onResolve }) {
@@ -191,10 +184,10 @@ const s = StyleSheet.create({
   headerTitle: { fontSize:20, fontWeight:'700', color:C.text0 },
   headerSub:   { fontSize:12, color:C.text1, marginTop:2 },
   chips:       { flexDirection:'row', gap:6, padding:10, paddingHorizontal:14 },
-  chip:        { paddingHorizontal:14, paddingVertical:6, borderRadius:20, backgroundColor:C.bg2, borderWidth:1, borderColor:C.border },
-  chipActive:  { backgroundColor:'rgba(59,130,246,0.2)', borderColor:'rgba(59,130,246,0.5)' },
-  chipTxt:     { fontSize:12, fontWeight:'600', color:C.text1 },
-  chipTxtActive:{ color:C.blueLight },
+  chip:        { paddingHorizontal:14, paddingVertical:6, borderRadius:20, backgroundColor:C.bg3, borderWidth:1, borderColor:C.border },
+  chipActive:  { backgroundColor:'rgba(15,160,223,0.15)', borderColor:'rgba(15,160,223,0.5)' },
+  chipTxt:     { fontSize:12, fontWeight:'600', color:C.text2 },
+  chipTxtActive:{ color:C.blue },
   card:        { backgroundColor:C.bg2, borderRadius:14, padding:14, borderWidth:1, borderColor:C.border },
   cardResolved:{ opacity:0.55 },
   cardHead:    { flexDirection:'row', gap:10, alignItems:'flex-start', marginBottom:10 },
@@ -206,10 +199,10 @@ const s = StyleSheet.create({
   cardDesc:    { fontSize:12, color:C.text1, lineHeight:17 },
   nodeRow:     { flexDirection:'row', justifyContent:'space-between', alignItems:'center', backgroundColor:C.bg3, borderRadius:8, padding:8, marginBottom:8 },
   nodeRowTxt:  { fontSize:11, color:C.text1 },
-  nodeRowLink: { fontSize:11, fontWeight:'600', color:C.blueLight },
+  nodeRowLink: { fontSize:11, fontWeight:'600', color:C.blue },
   cardFoot:    { flexDirection:'row', justifyContent:'space-between', alignItems:'center' },
   cardTime:    { fontSize:10, color:C.text2 },
-  resolveBtn:  { backgroundColor:'rgba(34,197,94,0.15)', borderRadius:8, paddingHorizontal:12, paddingVertical:6, borderWidth:1, borderColor:'rgba(34,197,94,0.3)' },
+  resolveBtn:  { backgroundColor:'rgba(22,163,74,0.1)', borderRadius:8, paddingHorizontal:12, paddingVertical:6, borderWidth:1, borderColor:'rgba(22,163,74,0.3)' },
   resolveBtnTxt:{ fontSize:11, fontWeight:'600', color:C.green },
   resolvedTxt: { fontSize:10, color:C.green, fontWeight:'500' },
   empty:       { alignItems:'center', paddingTop:60, gap:10 },

@@ -9,14 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { checkAndConsumeAIMessage } from '@/lib/subscription';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 const SUGGESTIONS = [
   'Is APK water safe to drink right now?',
@@ -105,19 +98,21 @@ export default function AIAssistantScreen() {
   const send = useCallback(async (text) => {
     const content = (text || input).trim();
     if (!content || loading) return;
+
     // Check free-tier daily limit before doing anything else
-      const { allowed } = await checkAndConsumeAIMessage();
-      if (!allowed) {
-        Alert.alert(
-          'Daily limit reached',
-          "You've used all 5 free AI messages today. Upgrade to Premium for unlimited access.",
-          [
-            { text: 'Not now', style: 'cancel' },
-            { text: 'Upgrade', onPress: () => router.push('/upgrade') },
-          ]
-        );
-        return;
-      }
+    const { allowed } = await checkAndConsumeAIMessage();
+    if (!allowed) {
+      Alert.alert(
+        'Daily limit reached',
+        "You've used all 5 free AI messages today. Upgrade to Premium for unlimited access.",
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => router.push('/upgrade') },
+        ]
+      );
+      return;
+    }
+
     setInput('');
     setShowSuggestions(false);
 
@@ -264,17 +259,17 @@ const s = StyleSheet.create({
   safe:        { flex: 1, backgroundColor: C.bg0 },
   header:      { backgroundColor: C.bg1, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: C.border },
   backBtn:     { padding: 4 },
-  backTxt:     { fontSize: 14, fontWeight: '600', color: C.blueLight },
+  backTxt:     { fontSize: 14, fontWeight: '600', color: C.blue },
   headerCenter:{ flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerIcon:  { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)', alignItems: 'center', justifyContent: 'center' },
+  headerIcon:  { width: 34, height: 34, borderRadius: 10, backgroundColor: 'rgba(15,160,223,0.12)', borderWidth: 1, borderColor: 'rgba(15,160,223,0.3)', alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 15, fontWeight: '700', color: C.text0 },
   liveRow:     { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
   liveDot:     { width: 5, height: 5, borderRadius: 3, backgroundColor: C.green },
   liveTxt:     { fontSize: 10, color: C.green, fontWeight: '500' },
   suggestions: { marginTop: 16, gap: 6 },
   suggestionsLabel: { fontSize: 10, fontWeight: '700', color: C.text2, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
-  suggestionBtn:    { backgroundColor: 'rgba(59,130,246,0.1)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(59,130,246,0.2)', padding: 10 },
-  suggestionTxt:    { fontSize: 12, color: C.blueLight, fontWeight: '500' },
+  suggestionBtn:    { backgroundColor: 'rgba(15,160,223,0.08)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(15,160,223,0.2)', padding: 10 },
+  suggestionTxt:    { fontSize: 12, color: C.blue, fontWeight: '500' },
   inputBar:    { flexDirection: 'row', alignItems: 'flex-end', gap: 8, padding: 12, backgroundColor: C.bg1, borderTopWidth: 1, borderTopColor: C.border },
   input:       { flex: 1, backgroundColor: C.bg2, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: C.text0, maxHeight: 100, borderWidth: 1, borderColor: C.border },
   sendBtn:     { width: 40, height: 40, borderRadius: 20, backgroundColor: C.blue, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
@@ -285,17 +280,17 @@ const s = StyleSheet.create({
 const mb = StyleSheet.create({
   row:       { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   rowUser:   { flexDirection: 'row-reverse' },
-  av:        { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  av:        { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(15,160,223,0.12)', borderWidth: 1, borderColor: 'rgba(15,160,223,0.3)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   bubble:    { maxWidth: '78%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
-  bubbleUser:{ backgroundColor: '#3b82f6', borderBottomRightRadius: 4 },
-  bubbleAI:  { backgroundColor: '#151c30', borderWidth: 1, borderColor: '#1e2d47', borderBottomLeftRadius: 4 },
-  txt:       { fontSize: 14, color: '#94a3b8', lineHeight: 20 },
+  bubbleUser:{ backgroundColor: C.blue, borderBottomRightRadius: 4 },
+  bubbleAI:  { backgroundColor: C.bg2, borderWidth: 1, borderColor: C.border, borderBottomLeftRadius: 4 },
+  txt:       { fontSize: 14, color: C.text1, lineHeight: 20 },
   txtUser:   { color: 'white' },
 });
 
 const td = StyleSheet.create({
   wrap:  { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  av:    { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)', alignItems: 'center', justifyContent: 'center' },
-  bubble:{ backgroundColor: '#151c30', borderWidth: 1, borderColor: '#1e2d47', borderRadius: 18, borderBottomLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', gap: 4, alignItems: 'center' },
-  dot:   { width: 6, height: 6, borderRadius: 3, backgroundColor: '#475569' },
+  av:    { width: 28, height: 28, borderRadius: 8, backgroundColor: 'rgba(15,160,223,0.12)', borderWidth: 1, borderColor: 'rgba(15,160,223,0.3)', alignItems: 'center', justifyContent: 'center' },
+  bubble:{ backgroundColor: C.bg2, borderWidth: 1, borderColor: C.border, borderRadius: 18, borderBottomLeftRadius: 4, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', gap: 4, alignItems: 'center' },
+  dot:   { width: 6, height: 6, borderRadius: 3, backgroundColor: C.text2 },
 });

@@ -1,11 +1,7 @@
 // app/components/LockScreen.js
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { authenticateWithBiometrics } from '@/lib/biometricAuth';
-
-const C = {
-  bg0: '#0a0e1a', blue: '#3b82f6',
-  text0: '#f1f5f9', text1: '#94a3b8',
-};
+import { C } from '@/lib/theme';
 
 export default function LockScreen({ onUnlock }) {
   const tryUnlock = async () => {

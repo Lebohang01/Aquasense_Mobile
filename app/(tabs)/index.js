@@ -11,14 +11,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { evaluateReading, PARAMETER_UNITS, CAMPUS_LABELS } from '@/utils/sans241';
 import ImpactCard from '@/components/ImpactCard';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 function NodeCard({ node, onPress, refreshTick }) {
   const [latest,  setLatest]  = useState(null);
@@ -72,7 +65,7 @@ function NodeCard({ node, onPress, refreshTick }) {
           <Text style={s.nodeCampus}>{CAMPUS_LABELS[node.campus] || node.campus}</Text>
         </View>
         <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <View style={[s.onlinePill, { backgroundColor: isOnline ? 'rgba(34,197,94,0.15)' : 'rgba(100,116,139,0.15)' }]}>
+          <View style={[s.onlinePill, { backgroundColor: isOnline ? 'rgba(22,163,74,0.12)' : 'rgba(100,116,139,0.12)' }]}>
             <View style={[s.onlineDot, { backgroundColor: isOnline ? C.green : C.text2 }]} />
             <Text style={[s.onlineTxt, { color: isOnline ? C.green : C.text2 }]}>
               {isOnline ? 'Online' : 'Offline'}
@@ -235,7 +228,8 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue} />}
       >
-        {/* Hero */}
+        {/* Hero — kept as a navy brand band, matching the logo's dark navy,
+            rather than making the whole header flat white */}
         <View style={s.hero}>
           <View style={s.heroTop}>
             <View style={s.logo}>
@@ -278,57 +272,30 @@ export default function DashboardScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={[s.quickAction, s.quickActionPurple]} onPress={() => router.push('/ai-assistant')}>
             <Text style={{ fontSize: 18 }}>💬</Text>
-            <Text style={[s.quickActionTxt, { color: '#a78bfa' }]}>Ask AquaAI</Text>
+            <Text style={[s.quickActionTxt, { color: C.purple }]}>Ask AquaAI</Text>
           </TouchableOpacity>
         </View>
-
 
         {/* Impact card */}
         <View style={{ paddingHorizontal: 14, marginTop: 10 }}>
           <ImpactCard />
         </View>
 
-        {/*LeaderBoard button*/}
-                <TouchableOpacity
-                  onPress={() => router.push('/leaderboard')}
-                  style={{
-                    backgroundColor: 'rgba(245,158,11,0.1)',
-                    borderRadius: 10,
-                    padding: 12,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                    borderWidth: 1,
-                    borderColor: 'rgba(245,158,11,0.25)',
-                    marginTop: 8,
-                  }}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#f59e0b' }}>
-                    🏆 Leaderboard
-                  </Text>
-                </TouchableOpacity>
+        {/* Leaderboard button */}
+        <TouchableOpacity
+          onPress={() => router.push('/leaderboard')}
+          style={s.leaderboardBtn}
+        >
+          <Text style={s.leaderboardBtnTxt}>🏆 Leaderboard</Text>
+        </TouchableOpacity>
 
         {/* Subscription button */}
-       <TouchableOpacity
-         onPress={() => router.push('/upgrade')}
-         style={{
-           backgroundColor: 'rgba(167,139,250,0.1)',
-           borderRadius: 10,
-           padding: 12,
-           flexDirection: 'row',
-           alignItems: 'center',
-           justifyContent: 'center',
-           gap: 6,
-           borderWidth: 1,
-           borderColor: 'rgba(167,139,250,0.25)',
-           marginTop: 8,
-         }}
-       >
-         <Text style={{ fontSize: 13, fontWeight: '700', color: '#a78bfa' }}>
-           ✨ Upgrade to Premium
-         </Text>
-       </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push('/upgrade')}
+          style={s.upgradeBtn}
+        >
+          <Text style={s.upgradeBtnTxt}>✨ Upgrade to Premium</Text>
+        </TouchableOpacity>
 
         {/* AI Insights — collapsible section */}
         <View style={{ paddingHorizontal: 14, marginTop: 14 }}>
@@ -362,7 +329,7 @@ export default function DashboardScreen() {
 
         {/* Legend */}
         <View style={s.legend}>
-          {[['✅','SAFE','#22c55e'],['⚠️','CAUTION','#f59e0b'],['🚨','UNSAFE','#ef4444']].map(([e,l,c])=>(
+          {[['✅','SAFE',C.green],['⚠️','CAUTION',C.amber],['🚨','UNSAFE',C.red]].map(([e,l,c])=>(
             <View key={l} style={s.legendItem}>
               <Text style={{ fontSize: 12 }}>{e}</Text>
               <Text style={[s.legendTxt, { color: c }]}>{l}</Text>
@@ -408,64 +375,69 @@ export default function DashboardScreen() {
 
 const s = StyleSheet.create({
   safe:    { flex: 1, backgroundColor: C.bg0 },
-  hero:    { backgroundColor: '#0a1628', padding: 20, paddingBottom: 20 },
+  hero:    { backgroundColor: C.navy, padding: 20, paddingBottom: 20 },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   logo:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logoIcon:{ width: 40, height: 40, backgroundColor: 'rgba(59,130,246,0.2)', borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(59,130,246,0.3)' },
-  logoTxt: { fontSize: 18, fontWeight: '700', color: '#f1f5f9', letterSpacing: -0.4 },
-  logoSub: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
-  iconBtn: { width: 38, height: 38, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', position: 'relative' },
-  alertBadge:    { position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
+  logoIcon:{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
+  logoTxt: { fontSize: 18, fontWeight: '700', color: '#ffffff', letterSpacing: -0.4 },
+  logoSub: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  iconBtn: { width: 38, height: 38, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', position: 'relative' },
+  alertBadge:    { position: 'absolute', top: -4, right: -4, backgroundColor: C.red, borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
   alertBadgeTxt: { fontSize: 9, fontWeight: '700', color: 'white' },
   statsRow: { flexDirection: 'row', gap: 8 },
-  statItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
-  statVal:  { fontSize: 20, fontWeight: '700', color: '#f1f5f9' },
-  statLbl:  { fontSize: 10, color: 'rgba(255,255,255,0.4)', marginTop: 2 },
+  statItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
+  statVal:  { fontSize: 20, fontWeight: '700', color: '#ffffff' },
+  statLbl:  { fontSize: 10, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
 
   quickActionsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, marginTop: 12 },
-  quickAction:     { flex: 1, backgroundColor: 'rgba(59,130,246,0.1)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(59,130,246,0.25)' },
-  quickActionPurple: { backgroundColor: 'rgba(139,92,246,0.1)', borderColor: 'rgba(139,92,246,0.25)' },
-  quickActionTxt:  { fontSize: 12, fontWeight: '700', color: '#60a5fa' },
+  quickAction:     { flex: 1, backgroundColor: 'rgba(15,160,223,0.1)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(15,160,223,0.25)' },
+  quickActionPurple: { backgroundColor: 'rgba(124,58,237,0.08)', borderColor: 'rgba(124,58,237,0.25)' },
+  quickActionTxt:  { fontSize: 12, fontWeight: '700', color: C.blue },
+
+  leaderboardBtn:    { backgroundColor: 'rgba(217,119,6,0.08)', borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(217,119,6,0.25)', marginHorizontal: 14, marginTop: 8 },
+  leaderboardBtnTxt: { fontSize: 13, fontWeight: '700', color: C.amber },
+  upgradeBtn:        { backgroundColor: 'rgba(124,58,237,0.08)', borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)', marginHorizontal: 14, marginTop: 8 },
+  upgradeBtnTxt:     { fontSize: 13, fontWeight: '700', color: C.purple },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
   sectionTitle:  { fontSize: 13, fontWeight: '700', color: C.text0 },
   sectionChevron:{ fontSize: 11, color: C.text2 },
 
   chipsWrap:    { paddingVertical: 8 },
-  chip:         { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: '#151c30', borderWidth: 1, borderColor: '#1e2d47' },
-  chipActive:   { backgroundColor: 'rgba(59,130,246,0.2)', borderColor: 'rgba(59,130,246,0.5)' },
-  chipTxt:      { fontSize: 12, fontWeight: '600', color: '#94a3b8' },
-  chipTxtActive:{ color: '#60a5fa' },
+  chip:         { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, backgroundColor: C.bg3, borderWidth: 1, borderColor: C.border },
+  chipActive:   { backgroundColor: 'rgba(15,160,223,0.15)', borderColor: 'rgba(15,160,223,0.5)' },
+  chipTxt:      { fontSize: 12, fontWeight: '600', color: C.text2 },
+  chipTxtActive:{ color: C.blue },
   legend:     { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 14, paddingBottom: 6 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   legendTxt:  { fontSize: 11, fontWeight: '600' },
-  legendNote: { fontSize: 10, color: '#475569', marginLeft: 'auto' },
+  legendNote: { fontSize: 10, color: C.text2, marginLeft: 'auto' },
 
-  nodeCard:   { backgroundColor: '#151c30', borderRadius: 14, borderWidth: 1, borderColor: '#1e2d47', overflow: 'hidden' },
+  nodeCard:   { backgroundColor: C.bg2, borderRadius: 14, borderWidth: 1, borderColor: C.border, overflow: 'hidden' },
   nodeHead:   { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 8 },
   nodeBody:   { paddingHorizontal: 14, paddingBottom: 14 },
-  nodeName:   { fontSize: 14, fontWeight: '700', color: '#f1f5f9' },
-  nodeCampus: { fontSize: 11, color: '#475569', marginTop: 2 },
-  chevron:    { fontSize: 10, color: '#475569', marginLeft: 2 },
+  nodeName:   { fontSize: 14, fontWeight: '700', color: C.text0 },
+  nodeCampus: { fontSize: 11, color: C.text2, marginTop: 2 },
+  chevron:    { fontSize: 10, color: C.text2, marginLeft: 2 },
   onlinePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
   onlineDot:  { width: 5, height: 5, borderRadius: 3 },
   onlineTxt:  { fontSize: 10, fontWeight: '600' },
   statusBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, marginTop: 4 },
   statusBadgeTxt: { fontSize: 10, fontWeight: '700' },
-  metricRow:  { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: '#1c2540', borderRadius: 10, padding: 10, marginBottom: 8 },
+  metricRow:  { flexDirection: 'row', justifyContent: 'space-around', backgroundColor: C.bg3, borderRadius: 10, padding: 10, marginBottom: 8 },
   metricItem: { alignItems: 'center', gap: 2 },
-  metricVal:  { fontSize: 16, fontWeight: '700', color: '#f1f5f9', letterSpacing: -0.5 },
-  metricUnit: { fontSize: 9, color: '#475569' },
+  metricVal:  { fontSize: 16, fontWeight: '700', color: C.text0, letterSpacing: -0.5 },
+  metricUnit: { fontSize: 9, color: C.text2 },
   loadingRow:       { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, justifyContent: 'center' },
-  loadingTxt:       { fontSize: 12, color: '#475569' },
+  loadingTxt:       { fontSize: 12, color: C.text2 },
   loadingCenter:    { alignItems: 'center', paddingVertical: 60, gap: 12 },
-  loadingCenterTxt: { fontSize: 14, color: '#475569' },
+  loadingCenterTxt: { fontSize: 14, color: C.text2 },
   issueRow: { borderRadius: 8, padding: 8, marginBottom: 6 },
   issueTxt: { fontSize: 11, fontWeight: '600' },
-  tapHint:  { fontSize: 11, color: '#60a5fa', fontWeight: '600', textAlign: 'right', marginTop: 4 },
+  tapHint:  { fontSize: 11, color: C.blue, fontWeight: '600', textAlign: 'right', marginTop: 4 },
   empty:    { alignItems: 'center', padding: 48, gap: 10 },
-  emptyTxt: { fontSize: 14, color: '#475569' },
-  errorBox: { margin: 14, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)', alignItems: 'center', gap: 6 },
-  errorTxt: { fontSize: 13, color: '#ef4444', textAlign: 'center' },
-  retryTxt: { fontSize: 12, color: '#60a5fa', fontWeight: '600' },
+  emptyTxt: { fontSize: 14, color: C.text2 },
+  errorBox: { margin: 14, backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 10, padding: 14, borderWidth: 1, borderColor: 'rgba(220,38,38,0.25)', alignItems: 'center', gap: 6 },
+  errorTxt: { fontSize: 13, color: C.red, textAlign: 'center' },
+  retryTxt: { fontSize: 12, color: C.blue, fontWeight: '600' },
 });

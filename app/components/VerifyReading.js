@@ -3,13 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  bg2: '#151c30', bg3: '#1c2540',
-  green: '#22c55e', red: '#ef4444', blueLight: '#60a5fa',
-  text0: '#f1f5f9', text1: '#94a3b8', text2: '#475569',
-  border: '#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 export default function VerifyReading({ nodeId }) {
   const [counts, setCounts] = useState({ up: 0, down: 0 });
@@ -124,9 +118,9 @@ const s = StyleSheet.create({
   subtitle:    { fontSize: 12, color: C.text1, marginBottom: 12 },
   buttonRow:   { flexDirection: 'row', gap: 10 },
   voteBtn:     { flex: 1, backgroundColor: C.bg3, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: C.border },
-  voteBtnActiveGood: { borderColor: C.green + '77', backgroundColor: 'rgba(34,197,94,0.08)' },
-  voteBtnActiveBad:  { borderColor: C.red + '77', backgroundColor: 'rgba(239,68,68,0.08)' },
+  voteBtnActiveGood: { borderColor: C.green + '77', backgroundColor: 'rgba(22,163,74,0.08)' },
+  voteBtnActiveBad:  { borderColor: C.red + '77', backgroundColor: 'rgba(220,38,38,0.08)' },
   voteEmoji:   { fontSize: 20, marginBottom: 4 },
   voteLabel:   { fontSize: 11, fontWeight: '700', color: C.text1 },
-  votedNote:   { fontSize: 11, color: C.blueLight, marginTop: 10, textAlign: 'center' },
+  votedNote:   { fontSize: 11, color: C.blue, marginTop: 10, textAlign: 'center' },
 });

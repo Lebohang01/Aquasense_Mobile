@@ -3,19 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa', purple:'#a78bfa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C, STATUS } from '@/lib/theme';
 
 const OVERALL_STYLE = {
-  safe:    { bg: 'rgba(34,197,94,0.08)',  border: C.green, icon: '✅', badgeBg: 'rgba(34,197,94,0.15)' },
-  caution: { bg: 'rgba(245,158,11,0.08)', border: C.amber, icon: '⚠️', badgeBg: 'rgba(245,158,11,0.15)' },
-  unsafe:  { bg: 'rgba(239,68,68,0.08)',  border: C.red,   icon: '🚨', badgeBg: 'rgba(239,68,68,0.15)' },
+  safe:    { bg: STATUS.SAFE.bg,    border: STATUS.SAFE.color,    icon: '✅', badgeBg: STATUS.SAFE.bg    },
+  caution: { bg: STATUS.CAUTION.bg, border: STATUS.CAUTION.color, icon: '⚠️', badgeBg: STATUS.CAUTION.bg },
+  unsafe:  { bg: STATUS.UNSAFE.bg,  border: STATUS.UNSAFE.color,  icon: '🚨', badgeBg: STATUS.UNSAFE.bg  },
 };
 
 const CAMPUS_LIST = ['UJ APK', 'UJ APB', 'UJ SWC', 'UJ DFC'];
@@ -182,7 +175,7 @@ export default function DailyReport() {
       {/* Quick stats */}
       <View style={s.statsGrid}>
         <View style={s.statBox}>
-          <Text style={[s.statNum, { color: C.blueLight }]}>{data.stats.totalReadings}</Text>
+          <Text style={[s.statNum, { color: C.blue }]}>{data.stats.totalReadings}</Text>
           <Text style={s.statLabel}>Readings</Text>
         </View>
         <View style={s.statBox}>
@@ -266,7 +259,7 @@ const s = StyleSheet.create({
   statNum:     { fontSize: 17, fontWeight: '700' },
   statLabel:   { fontSize: 9, color: C.text2, marginTop: 3 },
   toggleBtn:   { paddingHorizontal: 16, paddingBottom: 12 },
-  toggleTxt:   { fontSize: 11, color: C.blueLight, fontWeight: '700' },
+  toggleTxt:   { fontSize: 11, color: C.blue, fontWeight: '700' },
   campusList:  { paddingHorizontal: 16, paddingBottom: 14, gap: 8, borderTopWidth: 1, borderTopColor: C.border, paddingTop: 10 },
   campusCard:  { backgroundColor: C.bg3, borderRadius: 12, padding: 10 },
   campusHeader:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },

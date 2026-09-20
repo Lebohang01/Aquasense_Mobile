@@ -9,14 +9,7 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { evaluateReading, CAMPUS_LABELS } from '@/utils/sans241';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 // Accurate UJ campus coordinates
 const CAMPUS_REGIONS = {
@@ -116,7 +109,7 @@ export default function MapScreen() {
             ref={mapRef}
             style={s.map}
             initialRegion={CAMPUS_REGIONS['All']}
-            userInterfaceStyle="dark"
+            userInterfaceStyle="light"
           >
             {filtered.map(node => {
               if (!node.latitude || !node.longitude) return null;
@@ -186,20 +179,20 @@ const s = StyleSheet.create({
   headerTitle:{ fontSize: 20, fontWeight: '700', color: C.text0 },
   headerSub:  { fontSize: 12, color: C.text1, marginTop: 2 },
   chipsWrap:  { paddingVertical: 8, maxHeight: 50 },
-  chip:       { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: C.bg2, borderWidth: 1, borderColor: C.border },
-  chipActive: { backgroundColor: 'rgba(59,130,246,0.2)', borderColor: 'rgba(59,130,246,0.5)' },
-  chipTxt:    { fontSize: 12, fontWeight: '600', color: C.text1 },
-  chipTxtActive: { color: C.blueLight },
+  chip:       { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: C.bg3, borderWidth: 1, borderColor: C.border },
+  chipActive: { backgroundColor: 'rgba(15,160,223,0.15)', borderColor: 'rgba(15,160,223,0.5)' },
+  chipTxt:    { fontSize: 12, fontWeight: '600', color: C.text2 },
+  chipTxtActive: { color: C.blue },
   mapWrap:    { flex: 1 },
   map:        { flex: 1 },
   mapLoading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bg1 },
-  markerPin:  { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'white', shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 4, elevation: 5 },
+  markerPin:  { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'white', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
   callout:    { width: 200, padding: 12 },
-  calloutName:  { fontSize: 14, fontWeight: '700', color: '#1e293b', marginBottom: 3 },
-  calloutCampus:{ fontSize: 11, color: '#64748b', marginBottom: 5 },
+  calloutName:  { fontSize: 14, fontWeight: '700', color: C.text0, marginBottom: 3 },
+  calloutCampus:{ fontSize: 11, color: C.text2, marginBottom: 5 },
   calloutStatus:{ fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  calloutMeta:  { fontSize: 11, color: '#64748b', marginBottom: 5 },
-  calloutTap:   { fontSize: 11, color: '#3b82f6', fontWeight: '600' },
+  calloutMeta:  { fontSize: 11, color: C.text2, marginBottom: 5 },
+  calloutTap:   { fontSize: 11, color: C.blue, fontWeight: '600' },
   legend:     { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, backgroundColor: C.bg1, borderTopWidth: 1, borderTopColor: C.border },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendDot:  { width: 8, height: 8, borderRadius: 4 },

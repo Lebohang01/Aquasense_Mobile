@@ -9,14 +9,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useNodes } from '@/hooks/useNodes';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b', purple:'#8b5cf6',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 const ISSUE_TYPES = [
   { value:'taste',    label:'Bad Taste',     emoji:'👅' },
@@ -134,8 +127,8 @@ export default function ReportScreen() {
           </View>
           <View style={s.accountRow}>
             <Text style={s.accountLabel}>Role</Text>
-            <View style={[s.roleBadge, { backgroundColor: isAdmin ? 'rgba(139,92,246,0.2)' : 'rgba(59,130,246,0.15)' }]}>
-              <Text style={[s.roleTxt, { color: isAdmin ? '#a78bfa' : C.blueLight }]}>
+            <View style={[s.roleBadge, { backgroundColor: isAdmin ? 'rgba(124,58,237,0.15)' : 'rgba(15,160,223,0.15)' }]}>
+              <Text style={[s.roleTxt, { color: isAdmin ? C.purple : C.blue }]}>
                 {isAdmin ? '⚙️ Admin' : '🎓 Student'}
               </Text>
             </View>
@@ -239,14 +232,14 @@ const s = StyleSheet.create({
   header:      { backgroundColor:C.bg1, paddingHorizontal:18, paddingVertical:14, flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderBottomWidth:1, borderBottomColor:C.border },
   headerTitle: { fontSize:18, fontWeight:'700', color:C.text0 },
   headerSub:   { fontSize:12, color:C.text1, marginTop:2 },
-  signOutBtn:  { backgroundColor:'rgba(239,68,68,0.1)', borderRadius:8, paddingHorizontal:12, paddingVertical:6, borderWidth:1, borderColor:'rgba(239,68,68,0.3)' },
+  signOutBtn:  { backgroundColor:'rgba(220,38,38,0.08)', borderRadius:8, paddingHorizontal:12, paddingVertical:6, borderWidth:1, borderColor:'rgba(220,38,38,0.3)' },
   signOutTxt:  { fontSize:12, fontWeight:'600', color:C.red },
 
-  adminBtn:     { backgroundColor:'rgba(139,92,246,0.12)', borderRadius:14, padding:16, flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:16, borderWidth:1, borderColor:'rgba(139,92,246,0.35)' },
+  adminBtn:     { backgroundColor:'rgba(124,58,237,0.08)', borderRadius:14, padding:16, flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginBottom:16, borderWidth:1, borderColor:'rgba(124,58,237,0.3)' },
   adminBtnLeft: { flexDirection:'row', alignItems:'center', gap:12 },
-  adminBtnTitle:{ fontSize:15, fontWeight:'700', color:'#c4b5fd' },
+  adminBtnTitle:{ fontSize:15, fontWeight:'700', color:C.purple },
   adminBtnSub:  { fontSize:11, color:C.text2, marginTop:2 },
-  adminBtnArrow:{ fontSize:24, color:'#a78bfa' },
+  adminBtnArrow:{ fontSize:24, color:C.purple },
 
   accountCard:  { backgroundColor:C.bg2, borderRadius:12, padding:14, gap:10, borderWidth:1, borderColor:C.border, marginBottom:20 },
   accountRow:   { flexDirection:'row', justifyContent:'space-between', alignItems:'center' },
@@ -267,21 +260,21 @@ const s = StyleSheet.create({
   nodeSelectorPlaceholder: { fontSize:13, color:C.text2, flex:1 },
   nodePicker:      { backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, overflow:'hidden', marginBottom:12 },
   nodeOption:      { padding:12, borderBottomWidth:1, borderBottomColor:C.border },
-  nodeOptionActive:{ backgroundColor:'rgba(59,130,246,0.1)' },
+  nodeOptionActive:{ backgroundColor:'rgba(15,160,223,0.08)' },
   nodeOptionTxt:   { fontSize:13, fontWeight:'600', color:C.text0 },
   nodeOptionSub:   { fontSize:11, color:C.text2, marginTop:2 },
 
   issueGrid:     { flexDirection:'row', flexWrap:'wrap', gap:8, marginBottom:12 },
   issueCard:     { width:'30%', backgroundColor:C.bg2, borderRadius:12, padding:12, alignItems:'center', gap:6, borderWidth:1, borderColor:C.border },
-  issueCardActive:{ backgroundColor:'rgba(59,130,246,0.15)', borderColor:'rgba(59,130,246,0.5)' },
+  issueCardActive:{ backgroundColor:'rgba(15,160,223,0.12)', borderColor:'rgba(15,160,223,0.5)' },
   issueLbl:      { fontSize:11, fontWeight:'600', color:C.text1, textAlign:'center' },
-  issueLblActive:{ color:C.blueLight },
+  issueLblActive:{ color:C.blue },
 
   textArea:      { backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, padding:14, fontSize:13, color:C.text0, minHeight:100, marginBottom:4 },
   charCount:     { fontSize:10, color:C.text2, textAlign:'right', marginBottom:12 },
 
-  infoBox:       { backgroundColor:'rgba(59,130,246,0.08)', borderRadius:12, borderWidth:1, borderColor:'rgba(59,130,246,0.2)', padding:14, marginBottom:16 },
-  infoBoxTitle:  { fontSize:13, fontWeight:'700', color:C.blueLight, marginBottom:6 },
+  infoBox:       { backgroundColor:'rgba(15,160,223,0.06)', borderRadius:12, borderWidth:1, borderColor:'rgba(15,160,223,0.2)', padding:14, marginBottom:16 },
+  infoBoxTitle:  { fontSize:13, fontWeight:'700', color:C.blue, marginBottom:6 },
   infoBoxTxt:    { fontSize:12, color:C.text1, lineHeight:18 },
 
   submitBtn:         { backgroundColor:C.blue, borderRadius:12, padding:16, alignItems:'center', marginTop:4 },

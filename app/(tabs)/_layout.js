@@ -3,8 +3,7 @@ import { Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
-
-const C = { bg0:'#0a0e1a', border:'#1e2d47', blueLight:'#60a5fa', text2:'#475569', red:'#ef4444' };
+import { C } from '@/lib/theme';
 
 function TabIcon({ emoji, label, focused, badge }) {
   return (
@@ -39,7 +38,7 @@ export default function TabsLayout() {
     <Tabs screenOptions={{
       headerShown: false,
       tabBarStyle: {
-        backgroundColor: 'rgba(10,14,26,0.97)',
+        backgroundColor: 'rgba(255,255,255,0.97)',
         borderTopColor: C.border, borderTopWidth: 1,
         height: 76, paddingTop: 8, paddingBottom: 12,
       },
@@ -60,7 +59,7 @@ export default function TabsLayout() {
 const st = StyleSheet.create({
   wrap:        { alignItems:'center', justifyContent:'center', position:'relative' },
   label:       { fontSize:9, fontWeight:'500', color:C.text2, marginTop:1 },
-  labelActive: { color:C.blueLight },
+  labelActive: { color:C.blue },
   badge:       { position:'absolute', top:-4, right:-10, backgroundColor:C.red, borderRadius:8, minWidth:16, height:16, alignItems:'center', justifyContent:'center', paddingHorizontal:3 },
   badgeTxt:    { fontSize:9, fontWeight:'700', color:'white' },
 });

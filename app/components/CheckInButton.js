@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  blue: '#3b82f6', blueLight: '#60a5fa',
-  green: '#22c55e', text0: '#f1f5f9', text1: '#94a3b8',
-};
+import { C } from '@/lib/theme';
 
 export default function CheckInButton({ nodeId, nodeName }) {
   const [checking, setChecking] = useState(false);

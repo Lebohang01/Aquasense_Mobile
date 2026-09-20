@@ -4,14 +4,9 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import { C } from '@/lib/theme';
 
 const { width } = Dimensions.get('window');
-
-const C = {
-  bg0: '#0a0e1a', bg1: '#0f1525', bg2: '#151c30',
-  blue: '#3b82f6', blueLight: '#60a5fa', green: '#22c55e', amber: '#f59e0b', purple: '#a78bfa',
-  text0: '#f1f5f9', text1: '#94a3b8', text2: '#475569', border: '#1e2d47',
-};
 
 const SLIDES = [
   {
@@ -96,15 +91,15 @@ export default function OnboardingScreen() {
 
 const s = StyleSheet.create({
   safe:     { flex: 1, backgroundColor: C.bg0 },
-  skipBtn:  { alignSelf: 'flex-end',paddingHorizontal: 14, paddingVertical: 8, margin: 16, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', },
-  skipTxt:  { fontSize: 13, color: '#94a3b8', fontWeight: '700', },
+  skipBtn:  { alignSelf: 'flex-end', paddingHorizontal: 14, paddingVertical: 8, margin: 16, borderRadius: 8, backgroundColor: C.bg3, borderWidth: 1, borderColor: C.border },
+  skipTxt:  { fontSize: 13, color: C.text2, fontWeight: '700' },
   slide:    { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   emoji:    { fontSize: 56, marginBottom: 24 },
   title:    { fontSize: 20, fontWeight: '700', color: C.text0, textAlign: 'center', marginBottom: 12 },
   body:     { fontSize: 14, color: C.text1, textAlign: 'center', lineHeight: 21 },
   dots:     { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 20 },
   dot:      { width: 7, height: 7, borderRadius: 4, backgroundColor: C.border },
-  dotActive:{ backgroundColor: C.blueLight, width: 20 },
+  dotActive:{ backgroundColor: C.blue, width: 20 },
   nextBtn:  { backgroundColor: C.blue, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginHorizontal: 24, marginBottom: 24 },
   nextBtnTxt: { fontSize: 15, fontWeight: '700', color: '#fff' },
 });

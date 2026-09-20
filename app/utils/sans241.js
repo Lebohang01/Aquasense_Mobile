@@ -1,5 +1,6 @@
 // app/utils/sans241.js
 // SANS 241:2015 — South Africa's mandatory drinking water standard
+import { STATUS } from '@/lib/theme';
 
 const THRESHOLDS = {
   ph:          { min: 5.0, max: 9.7  },
@@ -30,7 +31,7 @@ export function evaluateReading(r) {
   }
 
   if (issues.length === 0) {
-    return { status:'SAFE',    issues:[], color:'#22c55e', bg:'rgba(34,197,94,0.15)',  emoji:'✅' };
+    return { status:'SAFE',    issues:[], color: STATUS.SAFE.color,    bg: STATUS.SAFE.bg,    emoji:'✅' };
   }
 
   const severe =
@@ -39,9 +40,9 @@ export function evaluateReading(r) {
     (r.turbidity !== undefined && r.turbidity !== null && r.turbidity > UNSAFE_LIMITS.turbidity.max);
 
   if (severe) {
-    return { status:'UNSAFE',  issues, color:'#ef4444', bg:'rgba(239,68,68,0.15)',  emoji:'🚨' };
+    return { status:'UNSAFE',  issues, color: STATUS.UNSAFE.color,  bg: STATUS.UNSAFE.bg,  emoji:'🚨' };
   }
-  return   { status:'CAUTION', issues, color:'#f59e0b', bg:'rgba(245,158,11,0.15)', emoji:'⚠️' };
+  return   { status:'CAUTION', issues, color: STATUS.CAUTION.color, bg: STATUS.CAUTION.bg, emoji:'⚠️' };
 }
 
 export const PARAMETER_UNITS = {

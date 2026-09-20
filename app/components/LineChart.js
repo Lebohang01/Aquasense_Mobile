@@ -3,20 +3,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path, Line, Text as SvgText, Rect, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-
-const C = {
-  bg2:    '#151c30',
-  text0:  '#f1f5f9',
-  text1:  '#94a3b8',
-  text2:  '#475569',
-  border: '#1e2d47',
-  blue:   '#3b82f6',
-  green:  '#22c55e',
-  amber:  '#f59e0b',
-  red:    '#ef4444',
-  purple: '#8b5cf6',
-  cyan:   '#06b6d4',
-};
+import { C } from '@/lib/theme';
 
 const METRIC_COLORS = {
   ph:          C.blue,

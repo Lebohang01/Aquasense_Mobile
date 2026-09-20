@@ -3,19 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { supabase } from '@/lib/supabase';
-
-const C = {
-  bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C, STATUS } from '@/lib/theme';
 
 const SEVERITY_STYLE = {
-  safe:    { border: C.green, bg: 'rgba(34,197,94,0.08)',  icon: '✅', color: C.green, badgeBg: 'rgba(34,197,94,0.15)' },
-  caution: { border: C.amber, bg: 'rgba(245,158,11,0.08)', icon: '⚠️', color: C.amber, badgeBg: 'rgba(245,158,11,0.15)' },
-  unsafe:  { border: C.red,   bg: 'rgba(239,68,68,0.08)',  icon: '🚨', color: C.red,   badgeBg: 'rgba(239,68,68,0.15)' },
+  safe:    { border: STATUS.SAFE.color,    bg: STATUS.SAFE.bg,    icon: '✅', color: STATUS.SAFE.color,    badgeBg: STATUS.SAFE.bg },
+  caution: { border: STATUS.CAUTION.color, bg: STATUS.CAUTION.bg, icon: '⚠️', color: STATUS.CAUTION.color, badgeBg: STATUS.CAUTION.bg },
+  unsafe:  { border: STATUS.UNSAFE.color,  bg: STATUS.UNSAFE.bg,  icon: '🚨', color: STATUS.UNSAFE.color,  badgeBg: STATUS.UNSAFE.bg },
 };
 
 async function fetchAlerts() {
@@ -224,7 +217,7 @@ const s = StyleSheet.create({
   statItem:    { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot:         { width: 7, height: 7, borderRadius: 4 },
   statTxt:     { fontSize: 11, fontWeight: '700' },
-  expandTxt:   { fontSize: 11, color: C.blueLight, fontWeight: '700' },
+  expandTxt:   { fontSize: 11, color: C.blue, fontWeight: '700' },
   campusGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 14, paddingTop: 4, borderTopWidth: 1, borderTopColor: C.border },
   campusItem:  { flexBasis: '47%', flexGrow: 1, backgroundColor: C.bg3, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   campusName:  { fontSize: 12, fontWeight: '600', color: C.text1 },

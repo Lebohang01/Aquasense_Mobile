@@ -9,14 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { isBiometricAvailable, getBiometricPreference, setBiometricPreference } from '@/lib/biometricAuth';
-
-const C = {
-  bg0:'#0a0e1a', bg1:'#0f1525', bg2:'#151c30', bg3:'#1c2540',
-  blue:'#3b82f6', blueLight:'#60a5fa',
-  green:'#22c55e', red:'#ef4444', amber:'#f59e0b', purple:'#8b5cf6',
-  text0:'#f1f5f9', text1:'#94a3b8', text2:'#475569',
-  border:'#1e2d47',
-};
+import { C } from '@/lib/theme';
 
 const CAMPUSES = ['UJ APK','UJ APB','UJ SWC','UJ DFC'];
 
@@ -32,7 +25,7 @@ function Row({ icon, label, subtitle, right, onPress, danger }) {
   const Wrap = onPress ? TouchableOpacity : View;
   return (
     <Wrap style={s.row} onPress={onPress} activeOpacity={0.7}>
-      <View style={[s.iconBox, danger && { backgroundColor:'rgba(239,68,68,0.15)' }]}>
+      <View style={[s.iconBox, danger && { backgroundColor:'rgba(220,38,38,0.1)' }]}>
         <Text style={{ fontSize:18 }}>{icon}</Text>
       </View>
       <View style={{ flex:1 }}>
@@ -109,23 +102,23 @@ export default function SettingsScreen() {
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioEnabled,   setBioEnabled]   = useState(false);
 
-useEffect(() => {
-  if (!user) return;
-  supabase.from('users').select('*').eq('id', user.id).single()
-    .then(({ data }) => {
-      if (data) {
-        setProfile(data);
-        setIsAdmin(data.role === 'admin');
-        setCampus(data.campus_preference || 'UJ APK');
-      }
-      setLoading(false);
-    });
-}, [user]);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('users').select('*').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data) {
+          setProfile(data);
+          setIsAdmin(data.role === 'admin');
+          setCampus(data.campus_preference || 'UJ APK');
+        }
+        setLoading(false);
+      });
+  }, [user]);
 
-useEffect(() => {
-  isBiometricAvailable().then(setBioAvailable);
-  getBiometricPreference().then(setBioEnabled);
-}, []);
+  useEffect(() => {
+    isBiometricAvailable().then(setBioAvailable);
+    getBiometricPreference().then(setBioEnabled);
+  }, []);
 
   const saveCampus = async (c) => {
     setCampus(c);
@@ -151,7 +144,7 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* Profile header */}
+      {/* Profile header — navy brand band, matching the dashboard hero */}
       <View style={s.profileHead}>
         <View style={s.avatar}>
           <Text style={s.avatarTxt}>
@@ -161,13 +154,13 @@ useEffect(() => {
         <View style={{ flex:1 }}>
           <Text style={s.profileName}>{profile?.email?.split('@')[0] || 'User'}</Text>
           <Text style={s.profileEmail}>{profile?.email || user?.email}</Text>
-          <View style={[s.badge, { backgroundColor: isAdmin ? 'rgba(139,92,246,0.2)' : 'rgba(59,130,246,0.15)' }]}>
-            <Text style={[s.badgeTxt, { color: isAdmin ? '#a78bfa' : C.blueLight }]}>
+          <View style={[s.badge, { backgroundColor: isAdmin ? 'rgba(124,58,237,0.25)' : 'rgba(15,160,223,0.2)' }]}>
+            <Text style={[s.badgeTxt, { color: isAdmin ? '#c4b5fd' : C.blueLight }]}>
               {isAdmin ? '⚙️ Admin' : '🎓 Student'} · {campus}
             </Text>
           </View>
         </View>
-        {saving && <ActivityIndicator size="small" color={C.blue} />}
+        {saving && <ActivityIndicator size="small" color={C.blueLight} />}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom:50 }}>
@@ -188,19 +181,19 @@ useEffect(() => {
         <SectionLabel title="NOTIFICATIONS" />
         <View style={s.section}>
           <Row icon="🔔" label="Push Notifications" subtitle="Real-time water quality alerts"
-            right={<Switch value={pushNotifs} onValueChange={setPushNotifs} trackColor={{ false:C.bg3, true:C.blue }} thumbColor="white"/>}/>
+            right={<Switch value={pushNotifs} onValueChange={setPushNotifs} trackColor={{ false:C.border, true:C.blue }} thumbColor="white"/>}/>
           <View style={s.div}/>
           <Row icon="📧" label="Email Digests" subtitle="Daily summary of campus readings"
-            right={<Switch value={emailDigest} onValueChange={setEmailDigest} trackColor={{ false:C.bg3, true:C.blue }} thumbColor="white"/>}/>
+            right={<Switch value={emailDigest} onValueChange={setEmailDigest} trackColor={{ false:C.border, true:C.blue }} thumbColor="white"/>}/>
           <View style={s.div}/>
           <Row icon="🚨" label="SMS Critical Alerts" subtitle="SMS for UNSAFE readings only"
-            right={<Switch value={criticalOnly} onValueChange={setCriticalOnly} trackColor={{ false:C.bg3, true:C.red }} thumbColor="white"/>}/>
+            right={<Switch value={criticalOnly} onValueChange={setCriticalOnly} trackColor={{ false:C.border, true:C.red }} thumbColor="white"/>}/>
           <View style={s.div}/>
           <Row icon="🔕" label="Critical Only Mode" subtitle="Suppress CAUTION notifications"
-            right={<Switch value={criticalOnly} onValueChange={setCriticalOnly} trackColor={{ false:C.bg3, true:C.amber }} thumbColor="white"/>}/>
+            right={<Switch value={criticalOnly} onValueChange={setCriticalOnly} trackColor={{ false:C.border, true:C.amber }} thumbColor="white"/>}/>
         </View>
 
-        {/* Biometrics toggle: */}
+        {/* Biometrics toggle */}
         {bioAvailable && (
           <>
             <SectionLabel title="SECURITY" />
@@ -213,7 +206,7 @@ useEffect(() => {
                       setBioEnabled(val);
                       await setBiometricPreference(val);
                     }}
-                    trackColor={{ false: C.bg3, true: C.blue }}
+                    trackColor={{ false: C.border, true: C.blue }}
                     thumbColor="white"
                   />
                 }
@@ -301,44 +294,44 @@ useEffect(() => {
 }
 
 const s = StyleSheet.create({
-  safe:        { flex:1, backgroundColor:'#0a0e1a' },
-  profileHead: { backgroundColor:'#0f1525', padding:20, flexDirection:'row', alignItems:'center', gap:14, borderBottomWidth:1, borderBottomColor:'#1e2d47' },
-  avatar:      { width:56, height:56, borderRadius:28, backgroundColor:'rgba(59,130,246,0.25)', alignItems:'center', justifyContent:'center', borderWidth:2, borderColor:'rgba(59,130,246,0.4)' },
-  avatarTxt:   { fontSize:22, fontWeight:'700', color:'#60a5fa' },
-  profileName: { fontSize:17, fontWeight:'700', color:'#f1f5f9', marginBottom:2 },
-  profileEmail:{ fontSize:12, color:'#475569', marginBottom:6 },
+  safe:        { flex:1, backgroundColor: C.bg0 },
+  profileHead: { backgroundColor: C.navy, padding:20, flexDirection:'row', alignItems:'center', gap:14, borderBottomWidth:0 },
+  avatar:      { width:56, height:56, borderRadius:28, backgroundColor:'rgba(94,195,239,0.25)', alignItems:'center', justifyContent:'center', borderWidth:2, borderColor:'rgba(94,195,239,0.4)' },
+  avatarTxt:   { fontSize:22, fontWeight:'700', color: C.blueLight },
+  profileName: { fontSize:17, fontWeight:'700', color:'#ffffff', marginBottom:2 },
+  profileEmail:{ fontSize:12, color:'rgba(255,255,255,0.6)', marginBottom:6 },
   badge:       { paddingHorizontal:10, paddingVertical:3, borderRadius:20, alignSelf:'flex-start' },
   badgeTxt:    { fontSize:11, fontWeight:'700' },
-  sectionLabel:{ fontSize:10, fontWeight:'700', color:'#475569', textTransform:'uppercase', letterSpacing:0.8, paddingHorizontal:16, paddingTop:20, paddingBottom:8 },
-  section:     { backgroundColor:'#151c30', marginHorizontal:14, borderRadius:14, borderWidth:1, borderColor:'#1e2d47', overflow:'hidden' },
+  sectionLabel:{ fontSize:10, fontWeight:'700', color: C.text2, textTransform:'uppercase', letterSpacing:0.8, paddingHorizontal:16, paddingTop:20, paddingBottom:8 },
+  section:     { backgroundColor: C.bg2, marginHorizontal:14, borderRadius:14, borderWidth:1, borderColor: C.border, overflow:'hidden' },
   row:         { flexDirection:'row', alignItems:'center', gap:12, paddingHorizontal:14, paddingVertical:13 },
-  iconBox:     { width:34, height:34, borderRadius:8, backgroundColor:'#1c2540', alignItems:'center', justifyContent:'center' },
-  rowLabel:    { fontSize:14, fontWeight:'500', color:'#f1f5f9' },
-  rowSub:      { fontSize:11, color:'#475569', marginTop:1 },
-  div:         { height:1, backgroundColor:'#1e2d47', marginLeft:60 },
-  chevron:     { fontSize:20, color:'#475569' },
-  linked:      { fontSize:12, fontWeight:'600', color:'#22c55e' },
+  iconBox:     { width:34, height:34, borderRadius:8, backgroundColor: C.bg3, alignItems:'center', justifyContent:'center' },
+  rowLabel:    { fontSize:14, fontWeight:'500', color: C.text0 },
+  rowSub:      { fontSize:11, color: C.text2, marginTop:1 },
+  div:         { height:1, backgroundColor: C.border, marginLeft:60 },
+  chevron:     { fontSize:20, color: C.text2 },
+  linked:      { fontSize:12, fontWeight:'600', color: C.green },
   campusGrid:  { flexDirection:'row', flexWrap:'wrap', gap:8, padding:14 },
-  campusChip:  { paddingHorizontal:14, paddingVertical:7, borderRadius:20, backgroundColor:'#1c2540', borderWidth:1, borderColor:'#1e2d47' },
-  campusChipOn:{ backgroundColor:'rgba(59,130,246,0.2)', borderColor:'#3b82f6' },
-  campusChipTxt:{ fontSize:12, fontWeight:'600', color:'#94a3b8' },
-  campusChipTxtOn:{ color:'#60a5fa' },
+  campusChip:  { paddingHorizontal:14, paddingVertical:7, borderRadius:20, backgroundColor: C.bg3, borderWidth:1, borderColor: C.border },
+  campusChipOn:{ backgroundColor:'rgba(15,160,223,0.15)', borderColor: C.blue },
+  campusChipTxt:{ fontSize:12, fontWeight:'600', color: C.text2 },
+  campusChipTxtOn:{ color: C.blue },
 });
 
 const tm = StyleSheet.create({
-  overlay:   { flex:1, backgroundColor:'rgba(0,0,0,0.75)', justifyContent:'flex-end' },
-  sheet:     { backgroundColor:'#0f1525', borderTopLeftRadius:24, borderTopRightRadius:24, padding:24, paddingBottom:44 },
-  title:     { fontSize:18, fontWeight:'700', color:'#f1f5f9', marginBottom:4 },
-  sub:       { fontSize:12, color:'#475569', marginBottom:20 },
-  fieldRow:  { flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingVertical:14, borderBottomWidth:1, borderBottomColor:'#1e2d47' },
-  fieldLabel:{ fontSize:14, color:'#f1f5f9', fontWeight:'500' },
+  overlay:   { flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'flex-end' },
+  sheet:     { backgroundColor: C.bg2, borderTopLeftRadius:24, borderTopRightRadius:24, padding:24, paddingBottom:44 },
+  title:     { fontSize:18, fontWeight:'700', color: C.text0, marginBottom:4 },
+  sub:       { fontSize:12, color: C.text2, marginBottom:20 },
+  fieldRow:  { flexDirection:'row', justifyContent:'space-between', alignItems:'center', paddingVertical:14, borderBottomWidth:1, borderBottomColor: C.border },
+  fieldLabel:{ fontSize:14, color: C.text0, fontWeight:'500' },
   controls:  { flexDirection:'row', alignItems:'center', gap:10 },
-  btn:       { width:32, height:32, backgroundColor:'#151c30', borderRadius:8, alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:'#1e2d47' },
-  btnTxt:    { fontSize:16, color:'#f1f5f9', fontWeight:'600', lineHeight:20 },
-  val:       { fontSize:15, fontWeight:'700', color:'#60a5fa', minWidth:72, textAlign:'center' },
+  btn:       { width:32, height:32, backgroundColor: C.bg3, borderRadius:8, alignItems:'center', justifyContent:'center', borderWidth:1, borderColor: C.border },
+  btnTxt:    { fontSize:16, color: C.text0, fontWeight:'600', lineHeight:20 },
+  val:       { fontSize:15, fontWeight:'700', color: C.blue, minWidth:72, textAlign:'center' },
   btnRow:    { flexDirection:'row', gap:10, marginTop:20 },
-  cancelBtn: { flex:1, backgroundColor:'#151c30', borderRadius:12, padding:14, alignItems:'center', borderWidth:1, borderColor:'#1e2d47' },
-  cancelTxt: { fontSize:14, fontWeight:'600', color:'#94a3b8' },
-  saveBtn:   { flex:1, backgroundColor:'#3b82f6', borderRadius:12, padding:14, alignItems:'center' },
+  cancelBtn: { flex:1, backgroundColor: C.bg3, borderRadius:12, padding:14, alignItems:'center', borderWidth:1, borderColor: C.border },
+  cancelTxt: { fontSize:14, fontWeight:'600', color: C.text2 },
+  saveBtn:   { flex:1, backgroundColor: C.blue, borderRadius:12, padding:14, alignItems:'center' },
   saveTxt:   { fontSize:14, fontWeight:'700', color:'white' },
 });

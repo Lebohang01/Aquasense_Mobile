@@ -3,11 +3,10 @@ import { View,Text,ScrollView,TouchableOpacity,StyleSheet,TextInput,Alert,Activi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { formatDistanceToNow } from 'date-fns';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+import { C, CATEGORIES } from '@/lib/theme';
 
-const C={bg0:'#0a0e1a',bg1:'#0f1525',bg2:'#151c30',bg3:'#1c2540',blue:'#3b82f6',blueLight:'#60a5fa',green:'#22c55e',red:'#ef4444',amber:'#f59e0b',text0:'#f1f5f9',text1:'#94a3b8',text2:'#475569',border:'#1e2d47'};
-const CAT_STYLES={general:{color:'#60a5fa',bg:'rgba(59,130,246,0.15)',emoji:'💬'},water_quality:{color:'#06b6d4',bg:'rgba(6,182,212,0.15)',emoji:'💧'},alert:{color:'#f87171',bg:'rgba(239,68,68,0.15)',emoji:'🚨'},resolved:{color:'#4ade80',bg:'rgba(34,197,94,0.15)',emoji:'✅'},tip:{color:'#fbbf24',bg:'rgba(245,158,11,0.15)',emoji:'💡'},question:{color:'#a78bfa',bg:'rgba(139,92,246,0.15)',emoji:'❓'}};
 function strColor(s){const c=['#1e3a5f','#1a3d2e','#2e1a5a','#3d2e0a','#0a2e3d','#2e0a2e'];let h=0;for(let i=0;i<s.length;i++)h=s.charCodeAt(i)+((h<<5)-h);return c[Math.abs(h)%c.length];}
 
 export default function PostDetailScreen() {
@@ -70,9 +69,9 @@ export default function PostDetailScreen() {
   const deleteComment=(cid)=>{Alert.alert('Delete','Delete this comment?',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:async()=>{await supabase.from('community_comments').delete().eq('id',cid);setComments(prev=>prev.filter(c=>c.id!==cid));}}]);};
   const deletePost=()=>{Alert.alert('Delete Post','Delete this post and all comments?',[{text:'Cancel',style:'cancel'},{text:'Delete',style:'destructive',onPress:async()=>{await supabase.from('community_posts').delete().eq('id',id);router.back();}}]);};
 
-  if(loading||!post)return(<SafeAreaView style={s.safe} edges={['top']}><View style={s.header}><TouchableOpacity onPress={()=>router.back()}><Text style={s.back}>← Back</Text></TouchableOpacity></View><ActivityIndicator color="#3b82f6" style={{marginTop:40}}/></SafeAreaView>);
+  if(loading||!post)return(<SafeAreaView style={s.safe} edges={['top']}><View style={s.header}><TouchableOpacity onPress={()=>router.back()}><Text style={s.back}>← Back</Text></TouchableOpacity></View><ActivityIndicator color={C.blue} style={{marginTop:40}}/></SafeAreaView>);
 
-  const cat=CAT_STYLES[post.category]||CAT_STYLES.general;
+  const cat=CATEGORIES[post.category]||CATEGORIES.general;
   const isOwner=post.user_id===user?.id;
 
   return (
@@ -140,36 +139,36 @@ export default function PostDetailScreen() {
 }
 
 const s=StyleSheet.create({
-  safe:{flex:1,backgroundColor:'#0a0e1a'},
-  header:{backgroundColor:'#0f1525',paddingHorizontal:16,paddingVertical:12,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:'#1e2d47'},
-  back:{fontSize:14,fontWeight:'600',color:'#60a5fa'},headerTxt:{fontSize:16,fontWeight:'700',color:'#f1f5f9'},
-  postCard:{backgroundColor:'#151c30',margin:14,borderRadius:14,padding:16,borderWidth:1,borderColor:'#1e2d47'},
+  safe:{flex:1,backgroundColor:C.bg0},
+  header:{backgroundColor:C.bg1,paddingHorizontal:16,paddingVertical:12,flexDirection:'row',alignItems:'center',justifyContent:'space-between',borderBottomWidth:1,borderBottomColor:C.border},
+  back:{fontSize:14,fontWeight:'600',color:C.blue},headerTxt:{fontSize:16,fontWeight:'700',color:C.text0},
+  postCard:{backgroundColor:C.bg2,margin:14,borderRadius:14,padding:16,borderWidth:1,borderColor:C.border},
   postHead:{flexDirection:'row',alignItems:'center',gap:10,marginBottom:12},
   av:{width:38,height:38,borderRadius:19,alignItems:'center',justifyContent:'center'},
   avTxt:{fontSize:14,fontWeight:'700',color:'white'},
-  author:{fontSize:13,fontWeight:'600',color:'#f1f5f9'},meta:{fontSize:11,color:'#475569',marginTop:1},
+  author:{fontSize:13,fontWeight:'600',color:C.text0},meta:{fontSize:11,color:C.text2,marginTop:1},
   catBadge:{paddingHorizontal:8,paddingVertical:3,borderRadius:8},catTxt:{fontSize:10,fontWeight:'700'},
-  postTitle:{fontSize:18,fontWeight:'700',color:'#f1f5f9',marginBottom:10,lineHeight:24},
-  postBody:{fontSize:14,color:'#94a3b8',lineHeight:21,marginBottom:12},
-  nodeTag:{backgroundColor:'#1c2540',borderRadius:8,paddingHorizontal:12,paddingVertical:8,alignSelf:'flex-start',marginBottom:14},
-  nodeTagTxt:{fontSize:12,color:'#60a5fa',fontWeight:'500'},
-  postActions:{flexDirection:'row',alignItems:'center',gap:16,paddingTop:12,borderTopWidth:1,borderTopColor:'#1e2d47'},
+  postTitle:{fontSize:18,fontWeight:'700',color:C.text0,marginBottom:10,lineHeight:24},
+  postBody:{fontSize:14,color:C.text1,lineHeight:21,marginBottom:12},
+  nodeTag:{backgroundColor:C.bg3,borderRadius:8,paddingHorizontal:12,paddingVertical:8,alignSelf:'flex-start',marginBottom:14},
+  nodeTagTxt:{fontSize:12,color:C.blue,fontWeight:'500'},
+  postActions:{flexDirection:'row',alignItems:'center',gap:16,paddingTop:12,borderTopWidth:1,borderTopColor:C.border},
   likeBtn:{flexDirection:'row',alignItems:'center',gap:6},
-  likeTxt:{fontSize:14,color:'#475569',fontWeight:'500'},
-  commentCount:{fontSize:13,color:'#475569',marginLeft:'auto'},
+  likeTxt:{fontSize:14,color:C.text2,fontWeight:'500'},
+  commentCount:{fontSize:13,color:C.text2,marginLeft:'auto'},
   commentsSection:{paddingHorizontal:14,paddingBottom:20},
-  commentsTitle:{fontSize:15,fontWeight:'700',color:'#f1f5f9',marginBottom:12},
-  noComments:{backgroundColor:'#151c30',borderRadius:10,padding:20,alignItems:'center',borderWidth:1,borderColor:'#1e2d47'},
-  noCommentsTxt:{fontSize:13,color:'#475569'},
-  cmCard:{backgroundColor:'#151c30',borderRadius:12,padding:12,borderWidth:1,borderColor:'#1e2d47'},
+  commentsTitle:{fontSize:15,fontWeight:'700',color:C.text0,marginBottom:12},
+  noComments:{backgroundColor:C.bg2,borderRadius:10,padding:20,alignItems:'center',borderWidth:1,borderColor:C.border},
+  noCommentsTxt:{fontSize:13,color:C.text2},
+  cmCard:{backgroundColor:C.bg2,borderRadius:12,padding:12,borderWidth:1,borderColor:C.border},
   cmHead:{flexDirection:'row',alignItems:'center',gap:8,marginBottom:8},
   cmAv:{width:30,height:30,borderRadius:15,alignItems:'center',justifyContent:'center'},
   cmAvTxt:{fontSize:12,fontWeight:'700',color:'white'},
-  cmName:{fontSize:12,fontWeight:'600',color:'#f1f5f9'},cmTime:{fontSize:10,color:'#475569',marginTop:1},
-  cmBody:{fontSize:13,color:'#94a3b8',lineHeight:18},
-  inputBar:{flexDirection:'row',alignItems:'flex-end',gap:8,padding:10,backgroundColor:'#0f1525',borderTopWidth:1,borderTopColor:'#1e2d47'},
+  cmName:{fontSize:12,fontWeight:'600',color:C.text0},cmTime:{fontSize:10,color:C.text2,marginTop:1},
+  cmBody:{fontSize:13,color:C.text1,lineHeight:18},
+  inputBar:{flexDirection:'row',alignItems:'flex-end',gap:8,padding:10,backgroundColor:C.bg1,borderTopWidth:1,borderTopColor:C.border},
   inputAv:{width:32,height:32,borderRadius:16,alignItems:'center',justifyContent:'center',flexShrink:0,marginBottom:4},
-  commentInput:{flex:1,backgroundColor:'#151c30',borderRadius:20,paddingHorizontal:14,paddingVertical:10,fontSize:14,color:'#f1f5f9',maxHeight:100,borderWidth:1,borderColor:'#1e2d47'},
-  sendBtn:{width:36,height:36,backgroundColor:'#3b82f6',borderRadius:18,alignItems:'center',justifyContent:'center',flexShrink:0,marginBottom:2},
+  commentInput:{flex:1,backgroundColor:C.bg2,borderRadius:20,paddingHorizontal:14,paddingVertical:10,fontSize:14,color:C.text0,maxHeight:100,borderWidth:1,borderColor:C.border},
+  sendBtn:{width:36,height:36,backgroundColor:C.blue,borderRadius:18,alignItems:'center',justifyContent:'center',flexShrink:0,marginBottom:2},
   sendBtnOff:{opacity:0.4},sendTxt:{fontSize:18,fontWeight:'700',color:'white',lineHeight:22},
 });
