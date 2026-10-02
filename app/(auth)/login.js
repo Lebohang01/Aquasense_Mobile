@@ -4,17 +4,13 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
   Platform, Alert, ScrollView, Animated, Easing,
-  LayoutAnimation, UIManager, Dimensions,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect, Text as SvgText, Defs, LinearGradient, Stop, G } from 'react-native-svg';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { C, STATUS } from '@/lib/theme';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -114,6 +110,31 @@ function WaveLayer({ amplitude, phaseOffset, opacity, color, duration }) {
   );
 }
 
+function AquaLogo({ size = 88 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 200 200">
+      <Defs>
+        <LinearGradient id="dropbg1" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0%" stopColor="#eaf6fc" />
+          <Stop offset="100%" stopColor="#0b6fb8" />
+        </LinearGradient>
+      </Defs>
+      <Rect width="200" height="200" rx="46" fill="url(#dropbg1)" />
+      <Path d="M100 28 C130 78 152 108 152 132 C152 160 128 178 100 178 C72 178 48 160 48 132 C48 108 70 78 100 28 Z" fill="#1798d6" />
+      <Path d="M92 46 C80 66 68 84 68 100 C68 112 78 118 88 112 C82 96 86 70 92 46 Z" fill="#bfe9f7" opacity={0.85} />
+      <Path d="M55 128 Q100 148 152 126 L152 132 C152 160 128 178 100 178 C72 178 48 160 48 132 Z" fill="#0d5c94" />
+      <G fill="#0b3a5c">
+        <Rect x="70" y="96" width="16" height="40" />
+        <Rect x="88" y="82" width="18" height="54" />
+        <Rect x="108" y="90" width="16" height="46" />
+        <Rect x="126" y="70" width="20" height="66" />
+      </G>
+      <Rect x="103" y="98" width="16" height="12" rx="2" fill="#eaf6fc" />
+      <SvgText x="111" y="107" fontSize="8" fill="#0b3a5c" textAnchor="middle" fontWeight="500">UJ</SvgText>
+    </Svg>
+  );
+}
+
 function PressScale({ children, onPress, style, disabled }) {
   const scale = useRef(new Animated.Value(1)).current;
   const pressIn  = () => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, friction: 6 }).start();
@@ -151,6 +172,7 @@ export default function LoginScreen() {
   const strengthAnim = useRef(new Animated.Value(0)).current;
   const statusFade  = useRef(new Animated.Value(0)).current;
   const statusScale = useRef(new Animated.Value(0.9)).current;
+  const formFade    = useRef(new Animated.Value(1)).current;
 
   // Floaty droplet — bob + gentle squash/stretch, like it's bobbing on water
   useEffect(() => {
@@ -243,8 +265,11 @@ export default function LoginScreen() {
   useEffect(() => { fetchCampusStatus(campus); }, [campus, fetchCampusStatus]);
 
   const switchMode = (m) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setMode(m);
+    Animated.timing(formFade, { toValue: 0, duration: 120, easing: Easing.out(Easing.quad), useNativeDriver: true })
+      .start(() => {
+        setMode(m);
+        Animated.timing(formFade, { toValue: 1, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+      });
   };
 
   const handleAuth = async () => {
@@ -303,7 +328,7 @@ export default function LoginScreen() {
             <View style={s.glowWrap}>
               <Animated.View style={[s.glow, { opacity: glowFade, transform: [{ scale: glowScale }] }]} />
               <Animated.View style={[s.logoWrap, { transform: [{ translateY: dropletY }, { scale: dropletScale }] }]}>
-                <View style={s.logoIcon}><Text style={{ fontSize:44 }}>💧</Text></View>
+                <View style={s.logoIcon}><AquaLogo size={88} /></View>
               </Animated.View>
             </View>
 
@@ -343,7 +368,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Form */}
-          <View style={s.form}>
+          <Animated.View style={[s.form, { opacity: formFade }]}>
             {/* Mode toggle */}
             <View style={s.modeToggle}>
               {['login','signup'].map(m => (
@@ -435,7 +460,7 @@ export default function LoginScreen() {
                 {' '}— South Africa's mandatory drinking water standard
               </Text>
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -447,9 +472,9 @@ const s = StyleSheet.create({
   hero:      { backgroundColor:C.navy, padding:32, paddingTop:40, alignItems:'center', overflow:'hidden', position:'relative' },
 
   glowWrap:  { width:88, height:88, alignItems:'center', justifyContent:'center', marginBottom:20 },
-  glow:      { position:'absolute', width:100, height:100, borderRadius:50, backgroundColor:'rgba(94,195,239,0.5)' },
+  glow:      { position:'absolute', width:100, height:100, borderRadius:50, backgroundColor:'rgba(23,152,214,0.5)' },
   logoWrap:  { width:88, height:88, alignItems:'center', justifyContent:'center' },
-  logoIcon:  { width:88, height:88, backgroundColor:'rgba(255,255,255,0.12)', borderRadius:26, alignItems:'center', justifyContent:'center', borderWidth:1, borderColor:'rgba(255,255,255,0.18)' },
+  logoIcon:  { width:88, height:88, borderRadius:20, overflow:'hidden', shadowColor:'#000', shadowOpacity:0.15, shadowRadius:8, shadowOffset:{width:0,height:3}, elevation:4 },
   appName:   { fontSize:30, fontWeight:'700', color:'#ffffff', letterSpacing:-0.8, marginBottom:6 },
   tagline:   { fontSize:13, color:'rgba(255,255,255,0.6)', marginBottom:22 },
 
