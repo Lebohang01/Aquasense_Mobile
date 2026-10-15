@@ -4,13 +4,15 @@ import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
   Platform, Alert, ScrollView, Animated, Easing,
-  Dimensions,
+  Dimensions, Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Rect, Text as SvgText, Defs, LinearGradient, Stop, G } from 'react-native-svg';
+import { useRouter } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { C, STATUS } from '@/lib/theme';
+import AquaLogo from '@/components/AquaLogo';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -110,31 +112,6 @@ function WaveLayer({ amplitude, phaseOffset, opacity, color, duration }) {
   );
 }
 
-function AquaLogo({ size = 88 }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 200 200">
-      <Defs>
-        <LinearGradient id="dropbg1" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0%" stopColor="#eaf6fc" />
-          <Stop offset="100%" stopColor="#0b6fb8" />
-        </LinearGradient>
-      </Defs>
-      <Rect width="200" height="200" rx="46" fill="url(#dropbg1)" />
-      <Path d="M100 28 C130 78 152 108 152 132 C152 160 128 178 100 178 C72 178 48 160 48 132 C48 108 70 78 100 28 Z" fill="#1798d6" />
-      <Path d="M92 46 C80 66 68 84 68 100 C68 112 78 118 88 112 C82 96 86 70 92 46 Z" fill="#bfe9f7" opacity={0.85} />
-      <Path d="M55 128 Q100 148 152 126 L152 132 C152 160 128 178 100 178 C72 178 48 160 48 132 Z" fill="#0d5c94" />
-      <G fill="#0b3a5c">
-        <Rect x="70" y="96" width="16" height="40" />
-        <Rect x="88" y="82" width="18" height="54" />
-        <Rect x="108" y="90" width="16" height="46" />
-        <Rect x="126" y="70" width="20" height="66" />
-      </G>
-      <Rect x="103" y="98" width="16" height="12" rx="2" fill="#eaf6fc" />
-      <SvgText x="111" y="107" fontSize="8" fill="#0b3a5c" textAnchor="middle" fontWeight="500">UJ</SvgText>
-    </Svg>
-  );
-}
-
 function PressScale({ children, onPress, style, disabled }) {
   const scale = useRef(new Animated.Value(1)).current;
   const pressIn  = () => Animated.spring(scale, { toValue: 0.96, useNativeDriver: true, friction: 6 }).start();
@@ -147,6 +124,7 @@ function PressScale({ children, onPress, style, disabled }) {
 }
 
 export default function LoginScreen() {
+  const router = useRouter();
   const { signIn, signUp } = useAuth();
   const [mode,     setMode]     = useState('login');
   const [email,    setEmail]    = useState('');
@@ -154,6 +132,7 @@ export default function LoginScreen() {
   const [campus,   setCampus]   = useState('APK');
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const [campusStatus,  setCampusStatus]  = useState(null);
   const [statusLoading, setStatusLoading] = useState(true);
@@ -272,6 +251,38 @@ export default function LoginScreen() {
       });
   };
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Enter your email', 'Type your email above first, then tap "Forgot password?" again.');
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      if (error) throw error;
+      Alert.alert('Check your email', 'If an account exists for this email, a password reset link has been sent.');
+    } catch (err) {
+      Alert.alert('Could not send reset email', err.message);
+    }
+  };
+
+  const handleAcceptTerms = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('users')
+          .update({ accepted_terms: true, accepted_terms_at: new Date().toISOString() })
+          .eq('id', user.id);
+      }
+    } catch {
+      // best-effort — if there's no active session yet (email confirmation
+      // pending), acceptance just won't be recorded server-side immediately
+    } finally {
+      setShowTerms(false);
+      Alert.alert('Account Created', 'Check your email to confirm, then sign in.',
+        [{ text:'OK', onPress:() => switchMode('login') }]);
+    }
+  };
+
   const handleAuth = async () => {
     if (!email.trim() || !password) {
       Alert.alert('Missing fields', 'Please enter your email and password.');
@@ -303,8 +314,7 @@ export default function LoginScreen() {
       } else {
         const { error } = await signUp(email.trim(), password, campus);
         if (error) throw error;
-        Alert.alert('Account Created', 'Check your email to confirm, then sign in.',
-          [{ text:'OK', onPress:() => switchMode('login') }]);
+        setShowTerms(true); // confirmation alert fires after they accept
       }
     } catch (err) {
       Alert.alert(mode === 'login' ? 'Login Failed' : 'Sign Up Failed', err.message);
@@ -418,6 +428,12 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
 
+              {mode === 'login' && (
+                <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
+                  <Text style={s.forgotTxt}>Forgot password?</Text>
+                </TouchableOpacity>
+              )}
+
               {/* Water-level password strength meter (signup only) */}
               {mode === 'signup' && password.length > 0 && (
                 <View style={s.strengthWrap}>
@@ -453,6 +469,15 @@ export default function LoginScreen() {
               }
             </PressScale>
 
+            {mode === 'signup' && (
+              <Text style={s.termsPreNote}>
+                By creating an account you'll be asked to accept our{' '}
+                <Text style={{ color: C.blue, fontWeight: '600' }} onPress={() => router.push('/terms')}>
+                  Terms & Conditions
+                </Text>.
+              </Text>
+            )}
+
             <View style={s.noteBox}>
               <Text style={s.noteTxt}>
                 📋 Monitoring against{' '}
@@ -463,6 +488,34 @@ export default function LoginScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Post-signup terms acceptance */}
+      <Modal visible={showTerms} transparent animationType="fade" onRequestClose={() => {}}>
+        <View style={tm.overlay}>
+          <View style={tm.sheet}>
+            <Text style={tm.title}>📋 Terms & Conditions</Text>
+            <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator>
+              <Text style={tm.body}>
+                AquaSense UJ is an informational academic project, not an official UJ
+                facilities or emergency service. Sensor readings may be delayed,
+                incomplete, or simulated — for genuine water safety concerns, contact
+                UJ Facilities Management directly, not this app.
+                {'\n\n'}
+                You agree to provide truthful reports and community verification votes,
+                and to use the Community section respectfully. If you use the AI
+                assistant, your questions are sent to a third-party AI provider (Groq)
+                to generate responses.
+              </Text>
+            </ScrollView>
+            <TouchableOpacity onPress={() => router.push('/terms')}>
+              <Text style={tm.link}>Read the full Terms & Conditions →</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={tm.acceptBtn} onPress={handleAcceptTerms}>
+              <Text style={tm.acceptTxt}>I Accept & Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -508,6 +561,7 @@ const s = StyleSheet.create({
   passRow:   { flexDirection:'row', alignItems:'center', backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, overflow:'hidden' },
   showBtn:   { paddingHorizontal:14, justifyContent:'center' },
   showBtnTxt:{ fontSize:12, fontWeight:'600', color:C.blue },
+  forgotTxt: { fontSize:12, fontWeight:'600', color:C.blue },
 
   strengthWrap:  { marginTop:10 },
   strengthTrack: { height:6, backgroundColor:C.bg3, borderRadius:3, overflow:'hidden', marginBottom:8 },
@@ -515,9 +569,20 @@ const s = StyleSheet.create({
   reqGrid:       { flexDirection:'row', flexWrap:'wrap', gap:8 },
   reqTxt:        { fontSize:11, fontWeight:'600', width:'47%' },
 
-  submitBtn: { backgroundColor:C.blue, borderRadius:12, padding:16, alignItems:'center', marginTop:8, marginBottom:16 },
+  submitBtn: { backgroundColor:C.blue, borderRadius:12, padding:16, alignItems:'center', marginTop:8, marginBottom:12 },
   submitBtnDisabled:{ opacity:0.7 },
   submitBtnTxt:{ fontSize:15, fontWeight:'700', color:'white', letterSpacing:-0.3 },
+  termsPreNote:{ fontSize:11, color:C.text2, textAlign:'center', marginBottom:14, lineHeight:16 },
   noteBox:   { backgroundColor:'rgba(15,160,223,0.06)', borderRadius:10, borderWidth:1, borderColor:'rgba(15,160,223,0.2)', padding:12 },
   noteTxt:   { fontSize:12, color:C.text1, lineHeight:18, textAlign:'center' },
+});
+
+const tm = StyleSheet.create({
+  overlay:   { flex:1, backgroundColor:'rgba(13,47,95,0.6)', justifyContent:'flex-end' },
+  sheet:     { backgroundColor:C.bg1, borderTopLeftRadius:24, borderTopRightRadius:24, padding:24, paddingBottom:36 },
+  title:     { fontSize:18, fontWeight:'700', color:C.text0, marginBottom:12 },
+  body:      { fontSize:13, color:C.text1, lineHeight:20 },
+  link:      { fontSize:12, fontWeight:'600', color:C.blue, textAlign:'center', marginTop:14, marginBottom:16 },
+  acceptBtn: { backgroundColor:C.blue, borderRadius:12, paddingVertical:15, alignItems:'center' },
+  acceptTxt: { fontSize:14, fontWeight:'700', color:'white' },
 });

@@ -4,13 +4,15 @@ import DailyReport  from '@/components/DailyReport';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, RefreshControl, ActivityIndicator,
+  StyleSheet, RefreshControl, ActivityIndicator, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { evaluateReading, PARAMETER_UNITS, CAMPUS_LABELS } from '@/utils/sans241';
 import ImpactCard from '@/components/ImpactCard';
+import AppHeader, { StatsBar, useHeaderHeight } from '@/components/AppHeader';
+import { useCollapsibleHeader } from '@/hooks/useCollapsibleHeader';
 import { C } from '@/lib/theme';
 
 function NodeCard({ node, onPress, refreshTick }) {
@@ -41,13 +43,11 @@ function NodeCard({ node, onPress, refreshTick }) {
   const isOnline = node.status === 'online';
 
   // Smart default: auto-expand nodes with an issue, collapse healthy ones.
-  // Only decide this once per load, so user's manual toggle isn't overridden
-  // on every refresh.
   useEffect(() => {
     if (expanded === null && eval_) {
       setExpanded(eval_.status !== 'SAFE');
     } else if (expanded === null && !loading && !latest) {
-      setExpanded(true); // no data yet — show the "no readings" state openly
+      setExpanded(true);
     }
   }, [eval_, loading, latest]);
 
@@ -137,9 +137,11 @@ export default function DashboardScreen() {
   const [selectedCampus, setSelectedCampus]= useState('All');
   const [error,          setError]         = useState(null);
   const [showInsights,   setShowInsights]  = useState(true);
-  // Increment this to tell NodeCards to re-fetch their latest reading
   const [refreshTick,    setRefreshTick]   = useState(0);
   const channelRef = useRef(null);
+
+  const HEADER_H = useHeaderHeight('home');
+  const { translateY, onScroll } = useCollapsibleHeader(HEADER_H);
 
   const fetchNodes = useCallback(async () => {
     try {
@@ -151,7 +153,6 @@ export default function DashboardScreen() {
       if (err) { setError(err.message); return; }
       setNodes(data || []);
       setError(null);
-      console.log('[Dashboard] nodes fetched:', data?.length);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -171,34 +172,17 @@ export default function DashboardScreen() {
     fetchNodes();
     fetchAlertCount();
 
-    // Clean up old channel
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
     }
 
-    // Subscribe to live readings & alerts
     const channel = supabase
       .channel('dashboard-live-' + Date.now())
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'readings' },
-        (payload) => {
-          console.log('[Realtime] new reading for node:', payload.new?.node_id);
-          // Bump tick so NodeCards re-fetch
-          setRefreshTick(t => t + 1);
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'alerts' },
-        (payload) => {
-          console.log('[Realtime] new alert');
-          fetchAlertCount();
-        }
-      )
-      .subscribe((status) => {
-        console.log('[Realtime] channel status:', status);
-      });
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'readings' },
+        () => setRefreshTick(t => t + 1))
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alerts' },
+        () => fetchAlertCount())
+      .subscribe();
 
     channelRef.current = channel;
 
@@ -223,46 +207,29 @@ export default function DashboardScreen() {
   const onlineCount= nodes.filter(n => n.status === 'online').length;
 
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
+    <SafeAreaView style={s.safe} edges={[]}>
+      <AppHeader
+        collapsible
+        translateY={translateY}
+        subtitle="SANS 241:2015 Monitor"
+        rightEmoji="⚠️"
+        alertCount={alertCount}
+        onRightPress={() => router.push('/(tabs)/alerts')}
+      />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingTop: HEADER_H }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue} />}
       >
-        {/* Hero — kept as a navy brand band, matching the logo's dark navy,
-            rather than making the whole header flat white */}
-        <View style={s.hero}>
-          <View style={s.heroTop}>
-            <View style={s.logo}>
-              <View style={s.logoIcon}><Text style={{ fontSize: 22 }}>💧</Text></View>
-              <View>
-                <Text style={s.logoTxt}>AquaSense UJ</Text>
-                <Text style={s.logoSub}>SANS 241:2015 Monitor</Text>
-              </View>
-            </View>
-            <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/(tabs)/alerts')}>
-              <Text style={{ fontSize: 18 }}>🔔</Text>
-              {alertCount > 0 && (
-                <View style={s.alertBadge}>
-                  <Text style={s.alertBadgeTxt}>{alertCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={s.statsRow}>
-            {[
-              { label: 'Nodes',    val: nodes.length },
-              { label: 'Online',   val: onlineCount  },
-              { label: 'Alerts',   val: alertCount   },
-              { label: 'Campuses', val: [...new Set(nodes.map(n => n.campus))].length },
-            ].map(st => (
-              <View key={st.label} style={s.statItem}>
-                <Text style={s.statVal}>{st.val}</Text>
-                <Text style={s.statLbl}>{st.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <StatsBar stats={[
+          { label: 'Nodes',    val: nodes.length },
+          { label: 'Online',   val: onlineCount  },
+          { label: 'Alerts',   val: alertCount   },
+          { label: 'Campuses', val: [...new Set(nodes.map(n => n.campus))].length },
+        ]} />
 
         {/* Quick Actions — compact side-by-side row */}
         <View style={s.quickActionsRow}>
@@ -276,25 +243,24 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
+
+
         {/* Impact card */}
         <View style={{ paddingHorizontal: 14, marginTop: 10 }}>
           <ImpactCard />
         </View>
 
         {/* Leaderboard button */}
-        <TouchableOpacity
-          onPress={() => router.push('/leaderboard')}
-          style={s.leaderboardBtn}
-        >
+        <TouchableOpacity onPress={() => router.push('/leaderboard')} style={s.leaderboardBtn}>
           <Text style={s.leaderboardBtnTxt}>🏆 Leaderboard</Text>
         </TouchableOpacity>
 
-        {/* Subscription button */}
-        <TouchableOpacity
-          onPress={() => router.push('/upgrade')}
-          style={s.upgradeBtn}
-        >
-          <Text style={s.upgradeBtnTxt}>✨ Upgrade to Premium</Text>
+        {/* Report an issue — made directly accessible from the dashboard,
+                    not buried two taps deep in Settings anymore */}
+        <TouchableOpacity style={s.reportBtn} onPress={() => router.push('/report')}>
+          <Text style={{ fontSize: 18 }}>📝</Text>
+          <Text style={s.reportBtnTxt}>Report a Water Issue</Text>
+          <Text style={s.reportBtnArrow}>›</Text>
         </TouchableOpacity>
 
         {/* AI Insights — collapsible section */}
@@ -345,7 +311,7 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Node cards — accordion, auto-expanded only if there's an issue */}
+        {/* Node cards */}
         <View style={{ padding: 14, gap: 10 }}>
           {loading ? (
             <View style={s.loadingCenter}>
@@ -375,29 +341,18 @@ export default function DashboardScreen() {
 
 const s = StyleSheet.create({
   safe:    { flex: 1, backgroundColor: C.bg0 },
-  hero:    { backgroundColor: C.navy, padding: 20, paddingBottom: 20 },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  logo:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logoIcon:{ width: 40, height: 40, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
-  logoTxt: { fontSize: 18, fontWeight: '700', color: '#ffffff', letterSpacing: -0.4 },
-  logoSub: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
-  iconBtn: { width: 38, height: 38, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)', position: 'relative' },
-  alertBadge:    { position: 'absolute', top: -4, right: -4, backgroundColor: C.red, borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
-  alertBadgeTxt: { fontSize: 9, fontWeight: '700', color: 'white' },
-  statsRow: { flexDirection: 'row', gap: 8 },
-  statItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
-  statVal:  { fontSize: 20, fontWeight: '700', color: '#ffffff' },
-  statLbl:  { fontSize: 10, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
 
   quickActionsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, marginTop: 12 },
   quickAction:     { flex: 1, backgroundColor: 'rgba(15,160,223,0.1)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', gap: 4, borderWidth: 1, borderColor: 'rgba(15,160,223,0.25)' },
   quickActionPurple: { backgroundColor: 'rgba(124,58,237,0.08)', borderColor: 'rgba(124,58,237,0.25)' },
   quickActionTxt:  { fontSize: 12, fontWeight: '700', color: C.blue },
 
+  reportBtn:    { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(220,38,38,0.06)', borderRadius: 10, padding: 12, marginHorizontal: 14, marginTop: 8, borderWidth: 1, borderColor: 'rgba(220,38,38,0.2)' },
+  reportBtnTxt: { flex: 1, fontSize: 13, fontWeight: '700', color: C.red },
+  reportBtnArrow:{ fontSize: 18, color: C.red },
+
   leaderboardBtn:    { backgroundColor: 'rgba(217,119,6,0.08)', borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(217,119,6,0.25)', marginHorizontal: 14, marginTop: 8 },
-  leaderboardBtnTxt: { fontSize: 13, fontWeight: '700', color: C.amber },
-  upgradeBtn:        { backgroundColor: 'rgba(124,58,237,0.08)', borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)', marginHorizontal: 14, marginTop: 8 },
-  upgradeBtnTxt:     { fontSize: 13, fontWeight: '700', color: C.purple },
+  leaderboardBtnTxt: { flex: 1, fontSize: 13, fontWeight: '700', color: C.amber },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
   sectionTitle:  { fontSize: 13, fontWeight: '700', color: C.text0 },

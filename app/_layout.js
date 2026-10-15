@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { registerForPushNotifications } from '@/utils/messaging';
 import { supabase } from '@/lib/supabase';
 import LockScreen from '@/components/LockScreen';
+import LoadingScreen from '@/components/LoadingScreen';
 import { getBiometricPreference } from '@/lib/biometricAuth';
 
 
@@ -42,7 +43,13 @@ function AuthGate({ children }) {
     }
   }, [user]);
 
-  return children;
+  // Overlay (not replace) so the navigator stays mounted for redirects
+  return (
+    <>
+      {children}
+      {loading && <LoadingScreen />}
+    </>
+  );
 }
 
 export default function RootLayout() {
@@ -74,9 +81,9 @@ const [locked, setLocked] = useState(false);
             <Stack.Screen name="admin" options={{ animation: 'none' }} />
             <Stack.Screen name="node/[id]" options={{ presentation: 'card' }} />
             <Stack.Screen name="ai-assistant/index" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="upgrade/index" options={{ presentation: 'modal' }} />
             <Stack.Screen name="leaderboard/index" options={{ presentation: 'modal' }} />
             <Stack.Screen name="onboarding/index" />
+            <Stack.Screen name="terms/index" />
           </Stack>
         </AuthGate>
          {locked && <LockScreen onUnlock={() => setLocked(false)} />}

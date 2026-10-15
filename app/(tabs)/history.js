@@ -7,6 +7,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import AppHeader from '@/components/AppHeader';
 import { C, STATUS } from '@/lib/theme';
 
 const METRICS = [
@@ -33,18 +34,6 @@ function formatDate(dateStr) {
   if (isToday(d))     return `Today, ${format(d,'HH:mm')}`;
   if (isYesterday(d)) return `Yesterday, ${format(d,'HH:mm')}`;
   return format(d, 'MMM d, HH:mm');
-}
-
-function getTrend(readings, key) {
-  if (!readings || readings.length < 2) return null;
-  const last  = readings[readings.length - 1]?.[key];
-  const prev  = readings[readings.length - 2]?.[key];
-  if (last === undefined || prev === undefined) return null;
-  const diff = last - prev;
-  if (Math.abs(diff) < 0.01) return { dir:'stable', txt:'Stable', color:C.text2 };
-  return diff > 0
-    ? { dir:'up',   txt:`▲ +${Math.abs(diff).toFixed(1)}`, color:C.amber }
-    : { dir:'down', txt:`▼ −${Math.abs(diff).toFixed(1)}`, color:C.green };
 }
 
 function isInRange(val, safe) {
@@ -94,6 +83,7 @@ export default function HistoryScreen() {
   const [selectedNode,setSelectedNode]= useState('all');
   const [stats,       setStats]       = useState(null);
 
+
   const fetchData = useCallback(async () => {
     const since = new Date(Date.now() - range * 86400000).toISOString();
     let q = supabase
@@ -108,7 +98,6 @@ export default function HistoryScreen() {
     const { data } = await q;
     setReadings(data || []);
 
-    // Compute stats for selected metric
     if (data && data.length > 0) {
       const vals = data.map(r => r[metric]).filter(v => v !== undefined && v !== null);
       if (vals.length > 0) {
@@ -142,109 +131,106 @@ export default function HistoryScreen() {
   const activeMetric = METRICS.find(m => m.key === metric) || METRICS[0];
 
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
-      {/* Header */}
-      <View style={s.header}>
-        <View>
-          <Text style={s.headerTitle}>📊 History</Text>
-          <Text style={s.headerSub}>Timestamped readings log</Text>
-        </View>
-        <View style={s.rangeTabs}>
-          {RANGES.map(r => (
-            <TouchableOpacity
-              key={r.label}
-              style={[s.rangeTab, range===r.days && s.rangeTabActive]}
-              onPress={() => setRange(r.days)}
-            >
-              <Text style={[s.rangeTabTxt, range===r.days && s.rangeTabTxtActive]}>{r.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Metric selector */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.metricsBar} contentContainerStyle={{ paddingHorizontal:14, gap:8 }}>
-        {METRICS.map(m => (
-          <TouchableOpacity
-            key={m.key}
-            style={[s.metricChip, metric===m.key && { backgroundColor:m.color+'20', borderColor:m.color }]}
-            onPress={() => setMetric(m.key)}
-          >
-            <Text style={{ fontSize:14 }}>{m.icon}</Text>
-            <Text style={[s.metricChipTxt, metric===m.key && { color:m.color }]}>{m.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Stats row */}
-      {stats && (
-        <View style={s.statsCard}>
-          <Text style={s.statsTitle}>
-            {activeMetric.icon} {activeMetric.label} — Last {range===1?'24 hours':`${range} days`}
-          </Text>
-          <View style={s.statsRow}>
-            <View style={s.statItem}>
-              <Text style={[s.statVal, { color:activeMetric.color }]}>{stats.avg}</Text>
-              <Text style={s.statLbl}>Avg</Text>
-            </View>
-            <View style={s.statItem}>
-              <Text style={[s.statVal, { color:C.green }]}>{stats.min}</Text>
-              <Text style={s.statLbl}>Min</Text>
-            </View>
-            <View style={s.statItem}>
-              <Text style={[s.statVal, { color:C.amber }]}>{stats.max}</Text>
-              <Text style={s.statLbl}>Max</Text>
-            </View>
-            <View style={s.statItem}>
-              <Text style={[s.statVal, { color:C.blue }]}>{stats.count}</Text>
-              <Text style={s.statLbl}>Readings</Text>
-            </View>
-          </View>
-          <Text style={s.statsNote}>SANS 241 safe range: {activeMetric.safe[0]}–{activeMetric.safe[1]}{activeMetric.unit}</Text>
-        </View>
-      )}
-
-      {/* Node filter */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.nodeFilter} contentContainerStyle={{ paddingHorizontal:14, gap:6 }}>
-        <TouchableOpacity
-          style={[s.nodeChip, selectedNode==='all' && s.nodeChipActive]}
-          onPress={() => setSelectedNode('all')}
-        >
-          <Text style={[s.nodeChipTxt, selectedNode==='all' && s.nodeChipTxtActive]}>All Nodes</Text>
-        </TouchableOpacity>
-        {nodes.map(n => (
-          <TouchableOpacity
-            key={n.node_id}
-            style={[s.nodeChip, selectedNode===n.node_id && s.nodeChipActive]}
-            onPress={() => setSelectedNode(n.node_id)}
-          >
-            <Text style={[s.nodeChipTxt, selectedNode===n.node_id && s.nodeChipTxtActive]}>
-              {n.location_name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Readings list */}
-      <Text style={s.recentLabel}>RECENT READINGS</Text>
+    <SafeAreaView style={s.safe} edges={[]}>
+      <AppHeader subtitle="Timestamped readings log" rightEmoji="⚠️" />
 
       {loading ? (
-        <ActivityIndicator color={C.blue} style={{ marginTop:40 }} />
+        <ActivityIndicator color={C.blue} style={{ marginTop: 40 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal:14, paddingBottom:90, gap:8 }}
+          contentContainerStyle={{ paddingBottom:90 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue} />}
         >
-          {readings.length === 0 ? (
-            <View style={s.empty}>
-              <Text style={{ fontSize:40 }}>📊</Text>
-              <Text style={s.emptyTxt}>No readings in this period</Text>
-              <Text style={s.emptyHint}>Insert test readings via Supabase SQL Editor</Text>
+          {/* Range tabs */}
+          <View style={s.rangeTabs}>
+            {RANGES.map(r => (
+              <TouchableOpacity
+                key={r.label}
+                style={[s.rangeTab, range===r.days && s.rangeTabActive]}
+                onPress={() => setRange(r.days)}
+              >
+                <Text style={[s.rangeTabTxt, range===r.days && s.rangeTabTxtActive]}>{r.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Metric selector */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.metricsBar} contentContainerStyle={{ paddingHorizontal:14, gap:8 }}>
+            {METRICS.map(m => (
+              <TouchableOpacity
+                key={m.key}
+                style={[s.metricChip, metric===m.key && { backgroundColor:m.color+'20', borderColor:m.color }]}
+                onPress={() => setMetric(m.key)}
+              >
+                <Text style={{ fontSize:14 }}>{m.icon}</Text>
+                <Text style={[s.metricChipTxt, metric===m.key && { color:m.color }]}>{m.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Stats row */}
+          {stats && (
+            <View style={s.statsCard}>
+              <Text style={s.statsTitle}>
+                {activeMetric.icon} {activeMetric.label} — Last {range===1?'24 hours':`${range} days`}
+              </Text>
+              <View style={s.statsRow}>
+                <View style={s.statItem}>
+                  <Text style={[s.statVal, { color:activeMetric.color }]}>{stats.avg}</Text>
+                  <Text style={s.statLbl}>Avg</Text>
+                </View>
+                <View style={s.statItem}>
+                  <Text style={[s.statVal, { color:C.green }]}>{stats.min}</Text>
+                  <Text style={s.statLbl}>Min</Text>
+                </View>
+                <View style={s.statItem}>
+                  <Text style={[s.statVal, { color:C.amber }]}>{stats.max}</Text>
+                  <Text style={s.statLbl}>Max</Text>
+                </View>
+                <View style={s.statItem}>
+                  <Text style={[s.statVal, { color:C.blue }]}>{stats.count}</Text>
+                  <Text style={s.statLbl}>Readings</Text>
+                </View>
+              </View>
+              <Text style={s.statsNote}>SANS 241 safe range: {activeMetric.safe[0]}–{activeMetric.safe[1]}{activeMetric.unit}</Text>
             </View>
-          ) : (
-            readings.map(r => <ReadingCard key={r.id} reading={r} />)
           )}
+
+          {/* Node filter */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.nodeFilter} contentContainerStyle={{ paddingHorizontal:14, gap:6 }}>
+            <TouchableOpacity
+              style={[s.nodeChip, selectedNode==='all' && s.nodeChipActive]}
+              onPress={() => setSelectedNode('all')}
+            >
+              <Text style={[s.nodeChipTxt, selectedNode==='all' && s.nodeChipTxtActive]}>All Nodes</Text>
+            </TouchableOpacity>
+            {nodes.map(n => (
+              <TouchableOpacity
+                key={n.node_id}
+                style={[s.nodeChip, selectedNode===n.node_id && s.nodeChipActive]}
+                onPress={() => setSelectedNode(n.node_id)}
+              >
+                <Text style={[s.nodeChipTxt, selectedNode===n.node_id && s.nodeChipTxtActive]}>
+                  {n.location_name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <Text style={s.recentLabel}>RECENT READINGS</Text>
+
+          <View style={{ paddingHorizontal:14, gap:8 }}>
+            {readings.length === 0 ? (
+              <View style={s.empty}>
+                <Text style={{ fontSize:40 }}>📊</Text>
+                <Text style={s.emptyTxt}>No readings in this period</Text>
+                <Text style={s.emptyHint}>Insert test readings via Supabase SQL Editor</Text>
+              </View>
+            ) : (
+              readings.map(r => <ReadingCard key={r.id} reading={r} />)
+            )}
+          </View>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -253,25 +239,22 @@ export default function HistoryScreen() {
 
 const s = StyleSheet.create({
   safe:         { flex:1, backgroundColor:C.bg0 },
-  header:       { backgroundColor:C.bg1, paddingHorizontal:16, paddingVertical:14, flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderBottomWidth:1, borderBottomColor:C.border },
-  headerTitle:  { fontSize:18, fontWeight:'700', color:C.text0 },
-  headerSub:    { fontSize:11, color:C.text2, marginTop:2 },
-  rangeTabs:    { flexDirection:'row', backgroundColor:C.bg3, borderRadius:10, padding:2, borderWidth:1, borderColor:C.border },
-  rangeTab:     { paddingHorizontal:12, paddingVertical:5, borderRadius:8 },
+  rangeTabs:    { flexDirection:'row', backgroundColor:C.bg3, borderRadius:10, padding:2, borderWidth:1, borderColor:C.border, marginHorizontal:14, marginTop:10 },
+  rangeTab:     { flex:1, paddingVertical:7, alignItems:'center', borderRadius:8 },
   rangeTabActive:{ backgroundColor:C.blue },
   rangeTabTxt:  { fontSize:12, fontWeight:'600', color:C.text2 },
   rangeTabTxtActive:{ color:'white' },
-  metricsBar:   { paddingVertical:10, maxHeight:52 },
+  metricsBar:   { paddingVertical:10, flexGrow:0,flexShrink:0 },
   metricChip:   { flexDirection:'row', alignItems:'center', gap:5, paddingHorizontal:12, paddingVertical:6, borderRadius:20, backgroundColor:C.bg2, borderWidth:1, borderColor:C.border },
   metricChipTxt:{ fontSize:12, fontWeight:'600', color:C.text1 },
-  statsCard:    { backgroundColor:C.bg2, marginHorizontal:14, borderRadius:12, padding:14, borderWidth:1, borderColor:C.border, marginTop:4 },
+  statsCard:    { backgroundColor:C.bg2, marginHorizontal:14, borderRadius:12, padding:14, borderWidth:1, borderColor:C.border, marginTop:4, marginBottom:8 },
   statsTitle:   { fontSize:13, fontWeight:'700', color:C.text0, marginBottom:10 },
   statsRow:     { flexDirection:'row', justifyContent:'space-around', marginBottom:8 },
   statItem:     { alignItems:'center' },
   statVal:      { fontSize:20, fontWeight:'700', letterSpacing:-0.5 },
   statLbl:      { fontSize:10, color:C.text2, marginTop:2 },
   statsNote:    { fontSize:11, color:C.text2 },
-  nodeFilter:   { paddingVertical:8, maxHeight:48 },
+  nodeFilter:   { paddingVertical:8, flexGrow:0,flexShrink:0 },
   nodeChip:     { paddingHorizontal:12, paddingVertical:5, borderRadius:20, backgroundColor:C.bg2, borderWidth:1, borderColor:C.border },
   nodeChipActive:{ backgroundColor:'rgba(15,160,223,0.15)', borderColor:'rgba(15,160,223,0.5)' },
   nodeChipTxt:  { fontSize:11, fontWeight:'600', color:C.text1 },

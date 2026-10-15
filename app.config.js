@@ -52,9 +52,18 @@ module.exports = {
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#3b82f6",
+          "color": "#0fa0df",
           "sounds": []
         }
+      ],
+      [
+          "expo-splash-screen",
+          {
+            "image": "./assets/splash-icon.png",
+            "imageWidth": 200,
+            "resizeMode": "contain",
+            "backgroundColor": "#f4fafd"
+          }
       ]
     ],
     "experiments": {

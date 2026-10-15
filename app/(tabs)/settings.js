@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, Switch, Alert, ActivityIndicator, Modal,
+  ScrollView, Switch, Alert, ActivityIndicator, Modal, Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/hooks/useAuth';
@@ -94,6 +94,7 @@ export default function SettingsScreen() {
   const [loading,      setLoading]      = useState(true);
   const [campus,       setCampus]       = useState('UJ APK');
   const [saving,       setSaving]       = useState(false);
+  const [exporting,    setExporting]    = useState(false);
   const [pushNotifs,   setPushNotifs]   = useState(true);
   const [emailDigest,  setEmailDigest]  = useState(false);
   const [criticalOnly, setCriticalOnly] = useState(false);
@@ -134,6 +135,47 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from('readings')
+        .select('created_at, ph, tds, turbidity, temperature, sans_status, nodes(location_name, campus)')
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        Alert.alert('No data to export', 'No readings found in the last 30 days.');
+        return;
+      }
+
+      const header = 'Date,Campus,Location,pH,TDS (mg/L),Turbidity (NTU),Temperature (C),Status';
+      const rows = data.map(r => [
+        new Date(r.created_at).toISOString(),
+        r.nodes?.campus || '',
+        r.nodes?.location_name || '',
+        r.ph ?? '',
+        r.tds ?? '',
+        r.turbidity ?? '',
+        r.temperature ?? '',
+        r.sans_status || '',
+      ].join(','));
+      const csv = [header, ...rows].join('\n');
+
+      await Share.share({
+        title: 'AquaSense UJ — Readings Export',
+        message: csv,
+      });
+    } catch (err) {
+      Alert.alert('Export failed', err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={s.safe} edges={['top']}>
@@ -144,7 +186,9 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top']}>
-      {/* Profile header — navy brand band, matching the dashboard hero */}
+      {/* Profile header — navy brand band, matching the dashboard hero.
+          Settings deliberately does NOT use the collapsible AppHeader —
+          this is a static profile identity bar, not a scroll-away nav bar. */}
       <View style={s.profileHead}>
         <View style={s.avatar}>
           <Text style={s.avatarTxt}>
@@ -248,9 +292,9 @@ export default function SettingsScreen() {
             right={<Text style={s.chevron}>›</Text>}
             onPress={() => Alert.alert('API Access',`Supabase URL:\n${process.env.EXPO_PUBLIC_SUPABASE_URL}`)}/>
           <View style={s.div}/>
-          <Row icon="📊" label="Export Data" subtitle="CSV · PDF reports"
-            right={<Text style={s.chevron}>›</Text>}
-            onPress={() => Alert.alert('Export Data','Data export coming in next release.')}/>
+          <Row icon="📊" label="Export Data" subtitle="Last 30 days of readings as CSV"
+            right={exporting ? <ActivityIndicator size="small" color={C.blue} /> : <Text style={s.chevron}>›</Text>}
+            onPress={exporting ? undefined : handleExportData}/>
         </View>
 
         {/* About */}
@@ -259,6 +303,10 @@ export default function SettingsScreen() {
           <Row icon="📋" label="SANS 241:2015" subtitle="South African drinking water standard"
             right={<Text style={s.chevron}>›</Text>}
             onPress={() => Alert.alert('SANS 241:2015','pH: 5.0–9.7\nTDS: ≤1200 mg/L\nTurbidity: ≤5 NTU\nTemperature: 5–25°C')}/>
+          <View style={s.div}/>
+          <Row icon="📄" label="Terms & Conditions" subtitle="How AquaSense UJ works and your data"
+            right={<Text style={s.chevron}>›</Text>}
+            onPress={() => router.push('/terms')}/>
           <View style={s.div}/>
           <Row icon="💧" label="AquaSense UJ" subtitle="Version 1.0.0 · University of Johannesburg"/>
         </View>

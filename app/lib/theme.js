@@ -2,6 +2,14 @@
 // AquaSense UJ — Light theme, derived from the marketing team's logo palette.
 // Import C from here instead of redefining it per-screen.
 
+// Shared header sizing. 'bar' = the compact in-flow header used on Map,
+// Alerts, History and Community (static, takes only ~56px + status bar).
+// 'hero' = the taller collapsing header used on Home (with stats row).
+export const HEADER = {
+  bar:  { logo: 30, padTop: 4, padBottom: 8 },
+  hero: { content: 128 },
+};
+
 export const C = {
   // Backgrounds
   bg0: '#f4fafd',   // page background

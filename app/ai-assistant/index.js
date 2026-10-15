@@ -8,7 +8,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { checkAndConsumeAIMessage } from '@/lib/subscription';
 import { C } from '@/lib/theme';
 
 const SUGGESTIONS = [
@@ -98,20 +97,6 @@ export default function AIAssistantScreen() {
   const send = useCallback(async (text) => {
     const content = (text || input).trim();
     if (!content || loading) return;
-
-    // Check free-tier daily limit before doing anything else
-    const { allowed } = await checkAndConsumeAIMessage();
-    if (!allowed) {
-      Alert.alert(
-        'Daily limit reached',
-        "You've used all 5 free AI messages today. Upgrade to Premium for unlimited access.",
-        [
-          { text: 'Not now', style: 'cancel' },
-          { text: 'Upgrade', onPress: () => router.push('/upgrade') },
-        ]
-      );
-      return;
-    }
 
     setInput('');
     setShowSuggestions(false);

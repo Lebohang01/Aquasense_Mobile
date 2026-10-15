@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter }  from 'expo-router';
 import { supabase }   from '@/lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
+import AppHeader from '@/components/AppHeader';
 import { C, STATUS } from '@/lib/theme';
 
 const PARAM_LABELS = {
@@ -85,6 +86,7 @@ export default function AlertsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter,     setFilter]     = useState('active');
 
+
   const fetchAlerts = useCallback(async () => {
     let query = supabase
       .from('alerts')
@@ -133,25 +135,13 @@ export default function AlertsScreen() {
   const unsafeCount = alerts.filter(a => !a.resolved_at && a.sans_status === 'UNSAFE').length;
 
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
-      <View style={s.header}>
-        <Text style={s.headerTitle}>Alerts</Text>
-        <Text style={s.headerSub}>
-          {unsafeCount > 0
-            ? `🚨 ${unsafeCount} UNSAFE · ${activeCount} total active`
-            : `${activeCount} active alert${activeCount !== 1 ? 's' : ''}`}
-        </Text>
-      </View>
-
-      <View style={s.chips}>
-        {FILTERS.map(f => (
-          <TouchableOpacity key={f.value}
-            style={[s.chip, filter === f.value && s.chipActive]}
-            onPress={() => setFilter(f.value)}>
-            <Text style={[s.chipTxt, filter === f.value && s.chipTxtActive]}>{f.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <SafeAreaView style={s.safe} edges={[]}>
+      <AppHeader
+        subtitle={unsafeCount > 0
+          ? `🚨 ${unsafeCount} UNSAFE · ${activeCount} active`
+          : `${activeCount} active alert${activeCount !== 1 ? 's' : ''}`}
+        rightEmoji="⚠️"
+      />
 
       <FlatList
         data={alerts}
@@ -159,6 +149,17 @@ export default function AlertsScreen() {
         contentContainerStyle={{ padding:14, paddingBottom:90, gap:8 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue} />}
+        ListHeaderComponent={
+          <View style={s.chips}>
+            {FILTERS.map(f => (
+              <TouchableOpacity key={f.value}
+                style={[s.chip, filter === f.value && s.chipActive]}
+                onPress={() => setFilter(f.value)}>
+                <Text style={[s.chipTxt, filter === f.value && s.chipTxtActive]}>{f.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        }
         ListEmptyComponent={
           !loading && (
             <View style={s.empty}>
@@ -180,10 +181,7 @@ export default function AlertsScreen() {
 
 const s = StyleSheet.create({
   safe:        { flex:1, backgroundColor:C.bg0 },
-  header:      { backgroundColor:C.bg1, paddingHorizontal:18, paddingVertical:14, borderBottomWidth:1, borderBottomColor:C.border },
-  headerTitle: { fontSize:20, fontWeight:'700', color:C.text0 },
-  headerSub:   { fontSize:12, color:C.text1, marginTop:2 },
-  chips:       { flexDirection:'row', gap:6, padding:10, paddingHorizontal:14 },
+  chips:       { flexDirection:'row', gap:6, marginBottom:10 },
   chip:        { paddingHorizontal:14, paddingVertical:6, borderRadius:20, backgroundColor:C.bg3, borderWidth:1, borderColor:C.border },
   chipActive:  { backgroundColor:'rgba(15,160,223,0.15)', borderColor:'rgba(15,160,223,0.5)' },
   chipTxt:     { fontSize:12, fontWeight:'600', color:C.text2 },

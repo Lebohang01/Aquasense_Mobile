@@ -6,10 +6,11 @@ import { useRouter } from 'expo-router';
 import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import AppHeader from '@/components/AppHeader';
 import { C, CATEGORIES } from '@/lib/theme';
 
 const CATS = [
-  {value:'all',label:'All Posts',emoji:'🌊'},{value:'general',label:'General',emoji:'💬'},
+  {value:'all',label:'All',emoji:'🌊'},{value:'general',label:'General',emoji:'💬'},
   {value:'water_quality',label:'Water Quality',emoji:'💧'},{value:'alert',label:'Alert',emoji:'🚨'},
   {value:'resolved',label:'Resolved',emoji:'✅'},{value:'tip',label:'Tip',emoji:'💡'},
   {value:'question',label:'Question',emoji:'❓'},
@@ -60,6 +61,7 @@ export default function CommunityScreen() {
   const[search,setSearch]=useState('');const[unread,setUnread]=useState(0);
   const chRef=useRef(null);
 
+
   const fetchPosts=useCallback(async()=>{
     let q=supabase.from('community_posts').select('*,users(id,email,campus_preference),nodes(node_id,location_name,campus),community_comments(id)').order('is_pinned',{ascending:false}).order('created_at',{ascending:false});
     if(cat!=='all')q=q.eq('category',cat);
@@ -107,67 +109,73 @@ export default function CommunityScreen() {
 
   const filtered=posts.filter(p=>!search||p.title.toLowerCase().includes(search.toLowerCase())||p.body.toLowerCase().includes(search.toLowerCase()));
 
+  const rightSlot = (
+    <View style={s.headerBtns}>
+      <TouchableOpacity style={s.msgBtn} onPress={()=>router.push('/community/messages')}>
+        <Text style={{fontSize:16}}>💬</Text>
+        {unread>0&&<View style={s.unreadBadge}><Text style={s.unreadTxt}>{unread}</Text></View>}
+      </TouchableOpacity>
+      <TouchableOpacity style={s.newPostBtn} onPress={()=>router.push('/community/new-post')}>
+        <Text style={s.newPostTxt}>＋</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
-      <View style={s.header}>
-        <View><Text style={s.headerTitle}>💧 Community</Text><Text style={s.headerSub}>UJ Water Quality Forum</Text></View>
-        <View style={s.headerBtns}>
-          <TouchableOpacity style={s.msgBtn} onPress={()=>router.push('/community/messages')}>
-            <Text style={{fontSize:18}}>💬</Text>
-            {unread>0&&<View style={s.unreadBadge}><Text style={s.unreadTxt}>{unread}</Text></View>}
-          </TouchableOpacity>
-          <TouchableOpacity style={s.newPostBtn} onPress={()=>router.push('/community/new-post')}>
-            <Text style={s.newPostTxt}>＋ Post</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={s.safe} edges={[]}>
+      <AppHeader subtitle="UJ Water Quality Forum" rightSlot={rightSlot} />
+
+      <View style={{ flex: 1 }}>
+        <View style={s.searchBar}>
+          <Text style={{fontSize:14,color:C.text2}}>🔍</Text>
+          <TextInput style={s.searchInput} placeholder="Search posts..." placeholderTextColor={C.text2} value={search} onChangeText={setSearch}/>
+          {search.length>0&&<TouchableOpacity onPress={()=>setSearch('')}><Text style={{color:C.text2,fontSize:16}}>✕</Text></TouchableOpacity>}
         </View>
-      </View>
-      <View style={s.searchBar}>
-        <Text style={{fontSize:14,color:C.text2}}>🔍</Text>
-        <TextInput style={s.searchInput} placeholder="Search posts..." placeholderTextColor={C.text2} value={search} onChangeText={setSearch}/>
-        {search.length>0&&<TouchableOpacity onPress={()=>setSearch('')}><Text style={{color:C.text2,fontSize:16}}>✕</Text></TouchableOpacity>}
-      </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chips} contentContainerStyle={{paddingHorizontal:14,gap:6,alignItems:'center',}}>
-        {CATS.map(c=>(
-          <TouchableOpacity key={c.value} style={[s.chip,cat===c.value&&s.chipActive]} onPress={()=>setCat(c.value)}>
-            <Text style={[s.chipTxt,cat===c.value&&s.chipTxtActive]}>{c.emoji} {c.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-      {loading?<ActivityIndicator color={C.blue} style={{marginTop:40}}/>:(
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{padding:14,gap:10,paddingBottom:90}} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}>
-          {filtered.length===0?(
-            <View style={s.empty}>
-              <Text style={{fontSize:40}}>💧</Text>
-              <Text style={s.emptyTxt}>No posts yet</Text>
-              <TouchableOpacity style={s.emptyBtn} onPress={()=>router.push('/community/new-post')}>
-                <Text style={s.emptyBtnTxt}>Be the first to post</Text>
-              </TouchableOpacity>
-            </View>
-          ):filtered.map(post=>(
-            <PostCard key={post.id} post={post} userId={user?.id} onPress={()=>router.push(`/community/post/${post.id}`)} onLike={handleLike}/>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.chips} contentContainerStyle={{paddingHorizontal:14,gap:6}}>
+          {CATS.map(c=>(
+            <TouchableOpacity key={c.value} style={[s.chip,cat===c.value&&s.chipActive]} onPress={()=>setCat(c.value)}>
+              <Text style={[s.chipTxt,cat===c.value&&s.chipTxtActive]}>{c.emoji} {c.label}</Text>
+            </TouchableOpacity>
           ))}
         </ScrollView>
-      )}
+        {loading?<ActivityIndicator color={C.blue} style={{marginTop:40}}/>:(
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{padding:14,gap:10,paddingBottom:90}}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.blue}/>}
+          >
+            {filtered.length===0?(
+              <View style={s.empty}>
+                <Text style={{fontSize:40}}>💧</Text>
+                <Text style={s.emptyTxt}>No posts yet</Text>
+                <TouchableOpacity style={s.emptyBtn} onPress={()=>router.push('/community/new-post')}>
+                  <Text style={s.emptyBtnTxt}>Be the first to post</Text>
+                </TouchableOpacity>
+              </View>
+            ):filtered.map(post=>(
+              <PostCard key={post.id} post={post} userId={user?.id} onPress={()=>router.push(`/community/post/${post.id}`)} onLike={handleLike}/>
+            ))}
+          </ScrollView>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
 
 const s=StyleSheet.create({
   safe:{flex:1,backgroundColor:C.bg0},
-  header:{backgroundColor:C.bg1,paddingHorizontal:16,paddingVertical:14,flexDirection:'row',justifyContent:'space-between',alignItems:'center',borderBottomWidth:1,borderBottomColor:C.border},
-  headerTitle:{fontSize:18,fontWeight:'700',color:C.text0},headerSub:{fontSize:11,color:C.text2,marginTop:2},
   headerBtns:{flexDirection:'row',gap:8,alignItems:'center'},
-  msgBtn:{width:38,height:38,backgroundColor:C.bg3,borderRadius:10,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:C.border,position:'relative'},
+  msgBtn:{width:34,height:34,backgroundColor:'rgba(255,255,255,0.1)',borderRadius:9,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.15)',position:'relative'},
   unreadBadge:{position:'absolute',top:-4,right:-4,backgroundColor:C.red,borderRadius:8,minWidth:16,height:16,alignItems:'center',justifyContent:'center',paddingHorizontal:3},
   unreadTxt:{fontSize:9,fontWeight:'700',color:'white'},
-  newPostBtn:{backgroundColor:C.blue,borderRadius:10,paddingHorizontal:14,paddingVertical:7},
-  newPostTxt:{fontSize:13,fontWeight:'700',color:'white'},
+  newPostBtn:{width:34,height:34,backgroundColor:C.blue,borderRadius:9,alignItems:'center',justifyContent:'center'},
+  newPostTxt:{fontSize:16,fontWeight:'700',color:'white'},
   searchBar:{flexDirection:'row',alignItems:'center',gap:8,margin:10,marginBottom:4,backgroundColor:C.bg2,borderRadius:10,padding:10,borderWidth:1,borderColor:C.border},
   searchInput:{flex:1,fontSize:13,color:C.text0},
-  chips:{paddingVertical:8,minHeight:48},
-  chip:{paddingHorizontal:12,paddingVertical:5,borderRadius:20,backgroundColor:C.bg3,borderWidth:1,borderColor:C.border,flexShrink:0,alignSelf:'flex-start'},
+  chips:{paddingVertical:8,flexGrow:0,flexShrink:0},
+  chip:{paddingHorizontal:12,paddingVertical:5,borderRadius:20,backgroundColor:C.bg3,borderWidth:1,borderColor:C.border},
   chipActive:{backgroundColor:'rgba(15,160,223,0.15)',borderColor:'rgba(15,160,223,0.5)'},
-  chipTxt:{fontSize:12,fontWeight:'600',color:C.text2},chipTxtActive:{color:C.blue, fontWeight:'600',},
+  chipTxt:{fontSize:12,fontWeight:'600',color:C.text2},chipTxtActive:{color:C.blue},
   card:{backgroundColor:C.bg2,borderRadius:14,padding:14,borderWidth:1,borderColor:C.border},
   pinned:{borderColor:'rgba(217,119,6,0.4)'},
   pinnedBadge:{backgroundColor:'rgba(217,119,6,0.12)',borderRadius:6,paddingHorizontal:8,paddingVertical:3,alignSelf:'flex-start',marginBottom:8},

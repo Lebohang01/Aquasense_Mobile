@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { getSubscriptionStatus } from '@/lib/subscription';
 import { C } from '@/lib/theme';
 
 async function fetchWeekReadings(nodeId) {
@@ -65,22 +64,12 @@ Respond in 1-2 sentences, plain English, no jargon. Start with either
 }
 
 export default function NodeAnomalyInsight({ nodeId, locationName }) {
-  const router = useRouter();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(null); // null = still checking
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const status = await getSubscriptionStatus();
-      setIsPremium(status.isPremium);
-
-      if (!status.isPremium) {
-        setLoading(false);
-        return; // don't waste a Groq call if they can't see the result
-      }
-
       const res = await generateInsight(nodeId, locationName);
       setResult(res);
     } catch {
@@ -92,32 +81,13 @@ export default function NodeAnomalyInsight({ nodeId, locationName }) {
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading || isPremium === null) {
+  if (loading) {
     return (
       <View style={s.card}>
         <View style={s.loadingRow}>
           <ActivityIndicator size="small" color={C.blue} />
           <Text style={s.loadingTxt}>Loading...</Text>
         </View>
-      </View>
-    );
-  }
-
-  // Locked state — free tier sees a teaser, not the actual insight
-  if (!isPremium) {
-    return (
-      <View style={[s.card, s.cardLocked]}>
-        <View style={s.header}>
-          <Text style={s.title}>7-Day Trend Insight</Text>
-          <Text style={s.premiumBadge}>PREMIUM</Text>
-        </View>
-        <Text style={s.lockedTxt}>
-          🔒 Unlock predictive trend analysis for every node — spot problems
-          before they become UNSAFE alerts.
-        </Text>
-        <TouchableOpacity style={s.upgradeBtn} onPress={() => router.push('/upgrade')}>
-          <Text style={s.upgradeBtnTxt}>Upgrade to Premium</Text>
-        </TouchableOpacity>
       </View>
     );
   }
@@ -138,14 +108,9 @@ export default function NodeAnomalyInsight({ nodeId, locationName }) {
 const s = StyleSheet.create({
   card:        { backgroundColor: C.bg2, borderRadius: 14, borderWidth: 1, borderColor: C.border, padding: 14 },
   cardFlagged: { borderColor: C.amber + '55', backgroundColor: 'rgba(217,119,6,0.06)' },
-  cardLocked:  { borderColor: C.purple + '55', backgroundColor: 'rgba(124,58,237,0.06)' },
   loadingRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
   loadingTxt:  { fontSize: 12, color: C.text1 },
   header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   title:       { fontSize: 11, fontWeight: '700', color: C.text2, textTransform: 'uppercase', letterSpacing: 0.5 },
-  premiumBadge:{ fontSize: 9, fontWeight: '700', color: C.purple, backgroundColor: 'rgba(124,58,237,0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   insightTxt:  { fontSize: 13, color: C.text0, lineHeight: 19 },
-  lockedTxt:   { fontSize: 12, color: C.text1, lineHeight: 18, marginBottom: 10 },
-  upgradeBtn:  { backgroundColor: C.purple, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
-  upgradeBtnTxt: { fontSize: 12, fontWeight: '700', color: '#fff' },
 });

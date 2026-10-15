@@ -10,7 +10,7 @@ function TabIcon({ emoji, label, focused, badge }) {
     <View style={st.wrap}>
       <Text style={{ fontSize:19 }}>{emoji}</Text>
       {badge > 0 && <View style={st.badge}><Text style={st.badgeTxt}>{badge > 99 ? '99+' : badge}</Text></View>}
-      <Text style={[st.label, focused && st.labelActive]}>{label}</Text>
+      <Text style={[st.label, focused && st.labelActive]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} allowFontScaling={false}>{label}</Text>
     </View>
   );
 }
@@ -43,10 +43,11 @@ export default function TabsLayout() {
         height: 76, paddingTop: 8, paddingBottom: 12,
       },
       tabBarShowLabel: false,
+      tabBarItemStyle: { paddingHorizontal: 0 },
     }}>
       <Tabs.Screen name="index"     options={{ tabBarIcon: ({focused}) => <TabIcon emoji="🏠" label="Home"      focused={focused} badge={0}/> }} />
       <Tabs.Screen name="map"       options={{ tabBarIcon: ({focused}) => <TabIcon emoji="🗺️" label="Map"       focused={focused} badge={0}/> }} />
-      <Tabs.Screen name="alerts"    options={{ tabBarIcon: ({focused}) => <TabIcon emoji="🔔" label="Alerts"    focused={focused} badge={0}/> }} />
+      <Tabs.Screen name="alerts"    options={{ tabBarIcon: ({focused}) => <TabIcon emoji="⚠️" label="Alerts"    focused={focused} badge={0}/> }} />
       <Tabs.Screen name="community" options={{ tabBarIcon: ({focused}) => <TabIcon emoji="💬" label="Community" focused={focused} badge={unread}/> }} />
       <Tabs.Screen name="history"   options={{ tabBarIcon: ({focused}) => <TabIcon emoji="📊" label="History"   focused={focused} badge={0}/> }} />
       <Tabs.Screen name="settings"  options={{ tabBarIcon: ({focused}) => <TabIcon emoji="⚙️" label="Settings"  focused={focused} badge={0}/> }} />
@@ -57,9 +58,9 @@ export default function TabsLayout() {
 }
 
 const st = StyleSheet.create({
-  wrap:        { alignItems:'center', justifyContent:'center', position:'relative' },
-  label:       { fontSize:9, fontWeight:'500', color:C.text2, marginTop:1 },
+  wrap:        { alignItems:'center', justifyContent:'center', position:'relative', width:64 },
+  label:       { fontSize:9, fontWeight:'500', color:C.text2, marginTop:1, width:64, textAlign:'center' },
   labelActive: { color:C.blue },
-  badge:       { position:'absolute', top:-4, right:-10, backgroundColor:C.red, borderRadius:8, minWidth:16, height:16, alignItems:'center', justifyContent:'center', paddingHorizontal:3 },
+  badge:       { position:'absolute', top:-4, right:6, backgroundColor:C.red, borderRadius:8, minWidth:16, height:16, alignItems:'center', justifyContent:'center', paddingHorizontal:3 },
   badgeTxt:    { fontSize:9, fontWeight:'700', color:'white' },
 });

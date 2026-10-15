@@ -2,13 +2,14 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { evaluateReading, CAMPUS_LABELS } from '@/utils/sans241';
+import AppHeader from '@/components/AppHeader';
 import { C } from '@/lib/theme';
 
 // Accurate UJ campus coordinates
@@ -20,13 +21,17 @@ const CAMPUS_REGIONS = {
   'UJ SWC': { latitude:-26.25953,  longitude:27.92397,  latitudeDelta:0.008, longitudeDelta:0.008 },
 };
 
-
-
 function markerColor(status) {
   if (status === 'UNSAFE')  return C.red;
   if (status === 'CAUTION') return C.amber;
   return C.green;
 }
+
+// Map screens don't have a page-level vertical scroll — the MapView
+// handles its own pan/zoom gestures, which would conflict with a
+// ScrollView wrapper. So the header here stays fixed/visible rather
+// than hide-on-scroll like the list-based tabs.
+const STATIC_TRANSLATE_Y = new Animated.Value(0);
 
 export default function MapScreen() {
   const router = useRouter();
@@ -37,13 +42,11 @@ export default function MapScreen() {
   const [selectedCampus,setSelectedCampus]= useState('All');
 
   useEffect(() => {
-    // Fetch all nodes
     supabase.from('nodes').select('*').order('campus')
       .then(({ data }) => {
         setNodes(data || []);
         setLoading(false);
 
-        // Fetch latest reading for each node
         (data || []).forEach(async (node) => {
           const { data: readings } = await supabase
             .from('readings')
@@ -71,11 +74,13 @@ export default function MapScreen() {
     : nodes.filter(n => n.campus === selectedCampus);
 
   return (
-    <SafeAreaView style={s.safe} edges={['top']}>
-      <View style={s.header}>
-        <Text style={s.headerTitle}>Campus Map</Text>
-        <Text style={s.headerSub}>{filtered.length} monitoring nodes</Text>
-      </View>
+    <SafeAreaView style={s.safe} edges={[]}>
+      <AppHeader
+        translateY={STATIC_TRANSLATE_Y}
+        subtitle={`Campus Map · ${filtered.length} nodes`}
+        rightEmoji="⚠️"
+        onRightPress={() => router.push('/(tabs)/alerts')}
+      />
 
       {/* Campus selector */}
       <ScrollView
@@ -175,10 +180,7 @@ export default function MapScreen() {
 
 const s = StyleSheet.create({
   safe:       { flex: 1, backgroundColor: C.bg0 },
-  header:     { backgroundColor: C.bg1, paddingHorizontal: 18, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: C.border },
-  headerTitle:{ fontSize: 20, fontWeight: '700', color: C.text0 },
-  headerSub:  { fontSize: 12, color: C.text1, marginTop: 2 },
-  chipsWrap:  { paddingVertical: 8, maxHeight: 50 },
+  chipsWrap:  { paddingVertical: 8, flexGrow: 0, flexShrink: 0 },
   chip:       { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: C.bg3, borderWidth: 1, borderColor: C.border },
   chipActive: { backgroundColor: 'rgba(15,160,223,0.15)', borderColor: 'rgba(15,160,223,0.5)' },
   chipTxt:    { fontSize: 12, fontWeight: '600', color: C.text2 },
