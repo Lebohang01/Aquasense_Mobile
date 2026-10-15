@@ -25,28 +25,42 @@ const STATUS_STYLE = {
 
 function AlertCard({ alert, onResolve }) {
   const router = useRouter();
-  const ss = STATUS_STYLE[alert.sans_status] || STATUS_STYLE.CAUTION;
+  // "connectivity" alerts aren't water readings — they mean the sensor stopped
+  // reporting. Show them as plain-language "Sensor offline" cards.
+  const isOffline = alert.parameter === 'connectivity';
+  const ss = isOffline
+    ? { color: STATUS.OFFLINE.color, bg: STATUS.OFFLINE.bg, emoji:'📡' }
+    : (STATUS_STYLE[alert.sans_status] || STATUS_STYLE.CAUTION);
   const pm = PARAM_LABELS[alert.parameter] || { label: alert.parameter, unit:'', icon:'📊', limit:'—' };
+  const badgeLabel = isOffline ? 'OFFLINE' : alert.sans_status;
 
   return (
     <View style={[s.card, alert.resolved_at && s.cardResolved]}>
       <View style={s.cardHead}>
         <View style={[s.alertIcon, { backgroundColor: ss.bg }]}>
-          <Text style={{ fontSize:20 }}>{pm.icon}</Text>
+          <Text style={{ fontSize:20 }}>{isOffline ? '📡' : pm.icon}</Text>
         </View>
         <View style={{ flex:1 }}>
           <View style={s.titleRow}>
-            <Text style={s.cardTitle}>{ss.emoji} {pm.label} {alert.sans_status}</Text>
+            <Text style={s.cardTitle}>
+              {isOffline ? '📡 Sensor offline' : `${ss.emoji} ${pm.label} ${alert.sans_status}`}
+            </Text>
             <View style={[s.badge, { backgroundColor: ss.bg }]}>
-              <Text style={[s.badgeTxt, { color: ss.color }]}>{alert.sans_status}</Text>
+              <Text style={[s.badgeTxt, { color: ss.color }]}>{badgeLabel}</Text>
             </View>
           </View>
+          {isOffline ? (
+            <Text style={s.cardDesc}>
+              This sensor has stopped sending readings, so water quality here can't be checked right now. It may need maintenance.
+            </Text>
+          ) : (
           <Text style={s.cardDesc}>
             Reading: <Text style={{ color: ss.color, fontWeight:'700' }}>
               {typeof alert.value === 'number' ? alert.value.toFixed(alert.parameter === 'ph' ? 2 : 1) : alert.value}{pm.unit}
             </Text>
             {' '}— SANS 241 limit: {pm.limit}{pm.unit}
           </Text>
+          )}
         </View>
       </View>
 
@@ -200,8 +214,9 @@ const s = StyleSheet.create({
   nodeRowLink: { fontSize:11, fontWeight:'600', color:C.blue },
   cardFoot:    { flexDirection:'row', justifyContent:'space-between', alignItems:'center' },
   cardTime:    { fontSize:10, color:C.text2 },
-  resolveBtn:  { backgroundColor:'rgba(22,163,74,0.1)', borderRadius:8, paddingHorizontal:12, paddingVertical:6, borderWidth:1, borderColor:'rgba(22,163,74,0.3)' },
-  resolveBtnTxt:{ fontSize:11, fontWeight:'600', color:C.green },
+  // Neutral navy (not green) so it doesn't read as "this is fine" on an UNSAFE alert
+  resolveBtn:  { backgroundColor:C.bg3, borderRadius:8, paddingHorizontal:12, paddingVertical:6, borderWidth:1, borderColor:C.navy },
+  resolveBtnTxt:{ fontSize:11, fontWeight:'700', color:C.navy },
   resolvedTxt: { fontSize:10, color:C.green, fontWeight:'500' },
   empty:       { alignItems:'center', paddingTop:60, gap:10 },
   emptyTitle:  { fontSize:18, fontWeight:'700', color:C.text0 },

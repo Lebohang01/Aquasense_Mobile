@@ -4,16 +4,17 @@ import DailyReport  from '@/components/DailyReport';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, RefreshControl, ActivityIndicator, Animated,
+  StyleSheet, RefreshControl, ActivityIndicator, Animated, AppState,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { evaluateReading, PARAMETER_UNITS, CAMPUS_LABELS } from '@/utils/sans241';
 import ImpactCard from '@/components/ImpactCard';
 import AppHeader, { StatsBar, useHeaderHeight } from '@/components/AppHeader';
 import { useCollapsibleHeader } from '@/hooks/useCollapsibleHeader';
 import { C } from '@/lib/theme';
+import { getCampusPreference } from '@/lib/campus';
 
 function NodeCard({ node, onPress, refreshTick }) {
   const [latest,  setLatest]  = useState(null);
@@ -139,6 +140,37 @@ export default function DashboardScreen() {
   const [showInsights,   setShowInsights]  = useState(true);
   const [refreshTick,    setRefreshTick]   = useState(0);
   const channelRef = useRef(null);
+  const lastPref   = useRef(null);
+
+  // Default the node list to the user's campus, and follow it when they change
+  // it in Settings. Only applies when the saved campus actually changed, so
+  // browsing other campuses with the chips isn't undone on every visit.
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const pref = await getCampusPreference(user.id);
+      if (active && pref && pref !== lastPref.current) {
+        lastPref.current = pref;
+        setSelectedCampus(pref);
+      }
+    })();
+    return () => { active = false; };
+  }, []));
+
+  // Coming back to the app after leaving it: go back to the user's own campus
+  // even if they had tapped "All" or another campus before leaving.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (state) => {
+      if (state !== 'active') return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const pref = await getCampusPreference(user.id);
+      if (pref) { lastPref.current = pref; setSelectedCampus(pref); }
+    });
+    return () => sub.remove();
+  }, []);
 
   const HEADER_H = useHeaderHeight('home');
   const { translateY, onScroll } = useCollapsibleHeader(HEADER_H);
@@ -262,6 +294,7 @@ export default function DashboardScreen() {
           <Text style={s.reportBtnTxt}>Report a Water Issue</Text>
           <Text style={s.reportBtnArrow}>›</Text>
         </TouchableOpacity>
+
 
         {/* AI Insights — collapsible section */}
         <View style={{ paddingHorizontal: 14, marginTop: 14 }}>

@@ -10,8 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { isBiometricAvailable, getBiometricPreference, setBiometricPreference } from '@/lib/biometricAuth';
 import { C } from '@/lib/theme';
+import { CAMPUSES, getCampusPreference, cacheCampus } from '@/lib/campus';
 
-const CAMPUSES = ['UJ APK','UJ APB','UJ SWC','UJ DFC'];
 
 const DEFAULT_THRESHOLDS = {
   ph_min:5.0, ph_max:9.7, tds_max:1200, turbidity_max:5, temp_min:5, temp_max:25,
@@ -105,15 +105,17 @@ export default function SettingsScreen() {
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('users').select('*').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data) {
-          setProfile(data);
-          setIsAdmin(data.role === 'admin');
-          setCampus(data.campus_preference || 'UJ APK');
-        }
-        setLoading(false);
-      });
+    (async () => {
+      // also applies a campus picked on the sign-up form
+      const pref = await getCampusPreference(user.id);
+      const { data } = await supabase.from('users').select('*').eq('id', user.id).single();
+      if (data) {
+        setProfile(data);
+        setIsAdmin(data.role === 'admin');
+        setCampus(pref || 'UJ APK');
+      }
+      setLoading(false);
+    })();
   }, [user]);
 
   useEffect(() => {
@@ -123,6 +125,7 @@ export default function SettingsScreen() {
 
   const saveCampus = async (c) => {
     setCampus(c);
+    cacheCampus(c);
     setSaving(true);
     await supabase.from('users').update({ campus_preference: c }).eq('id', user.id);
     setSaving(false);

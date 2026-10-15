@@ -16,6 +16,8 @@ import AquaLogo from '@/components/AquaLogo';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
+import { setPendingCampus, getCachedCampus, cacheCampus } from '@/lib/campus';
+
 const CAMPUSES = ['APK', 'APB', 'DFC', 'SWC'];
 const CAMPUS_FULL_NAME = { APK: 'UJ APK', APB: 'UJ APB', DFC: 'UJ DFC', SWC: 'UJ SWC' };
 
@@ -243,6 +245,14 @@ export default function LoginScreen() {
 
   useEffect(() => { fetchCampusStatus(campus); }, [campus, fetchCampusStatus]);
 
+  // Open on this phone's last-used campus (set at sign-up / in Settings)
+  useEffect(() => {
+    getCachedCampus().then(full => {
+      const code = full && full.replace('UJ ', '');
+      if (code && CAMPUSES.includes(code)) setCampus(code);
+    });
+  }, []);
+
   const switchMode = (m) => {
     Animated.timing(formFade, { toValue: 0, duration: 120, easing: Easing.out(Easing.quad), useNativeDriver: true })
       .start(() => {
@@ -312,7 +322,9 @@ export default function LoginScreen() {
         const { error } = await signIn(email.trim(), password);
         if (error) throw error;
       } else {
-        const { error } = await signUp(email.trim(), password, campus);
+        await setPendingCampus(CAMPUS_FULL_NAME[campus]);
+        cacheCampus(CAMPUS_FULL_NAME[campus]);
+        const { error } = await signUp(email.trim(), password, CAMPUS_FULL_NAME[campus]);
         if (error) throw error;
         setShowTerms(true); // confirmation alert fires after they accept
       }
@@ -410,6 +422,27 @@ export default function LoginScreen() {
                 </Text>
               )}
             </View>
+
+            {/* Campus — sign-up only */}
+            {mode === 'signup' && (
+              <View style={s.inputWrap}>
+                <Text style={s.inputLabel}>Your Campus</Text>
+                <View style={s.formCampusRow}>
+                  {CAMPUSES.map(c => (
+                    <TouchableOpacity
+                      key={c}
+                      onPress={() => setCampus(c)}
+                      style={[s.formCampusChip, campus === c && s.formCampusChipOn]}
+                    >
+                      <Text style={[s.formCampusTxt, campus === c && s.formCampusTxtOn]}>{c}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={[s.hint, { color: C.text2 }]}>
+                  Your home screen will show this campus first. You can change it later in Settings.
+                </Text>
+              </View>
+            )}
 
             {/* Password */}
             <View style={s.inputWrap}>
@@ -558,6 +591,11 @@ const s = StyleSheet.create({
   inputLabel:{ fontSize:12, fontWeight:'600', color:C.text1, marginBottom:6 },
   input:     { backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, padding:14, fontSize:14, color:C.text0 },
   hint:      { fontSize:11, marginTop:6, fontWeight:'500' },
+  formCampusRow:    { flexDirection:'row', flexWrap:'wrap', gap:8 },
+  formCampusChip:   { paddingHorizontal:16, paddingVertical:9, borderRadius:20, backgroundColor:C.bg3, borderWidth:1, borderColor:C.border },
+  formCampusChipOn: { backgroundColor:'rgba(15,160,223,0.15)', borderColor:C.blue },
+  formCampusTxt:    { fontSize:13, fontWeight:'700', color:C.text2 },
+  formCampusTxtOn:  { color:C.blue },
   passRow:   { flexDirection:'row', alignItems:'center', backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, overflow:'hidden' },
   showBtn:   { paddingHorizontal:14, justifyContent:'center' },
   showBtnTxt:{ fontSize:12, fontWeight:'600', color:C.blue },

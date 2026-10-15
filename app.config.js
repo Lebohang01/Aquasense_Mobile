@@ -27,7 +27,7 @@ module.exports = {
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0a0e1a"
+        "backgroundColor": "#eaf6fc"
       },
       "package": "ac.za.uj.aquasense",
       "googleServicesFile": process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",

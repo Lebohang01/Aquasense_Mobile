@@ -169,7 +169,16 @@ export default function DailyReport() {
 
       {/* Report text */}
       <View style={s.reportBody}>
-        <Text style={s.reportTxt}>{data.report}</Text>
+        {/* One block per paragraph, with a thin line between them */}
+        {data.report
+          .split(/\n\s*\n/)
+          .map(p => p.trim())
+          .filter(Boolean)
+          .map((para, i) => (
+            <View key={i} style={i > 0 ? s.paraDivider : null}>
+              <Text style={s.reportTxt}>{para}</Text>
+            </View>
+          ))}
       </View>
 
       {/* Quick stats */}
@@ -254,6 +263,7 @@ const s = StyleSheet.create({
   badgeTxt:    { fontSize: 10, fontWeight: '700' },
   reportBody:  { paddingHorizontal: 16, paddingVertical: 14 },
   reportTxt:   { fontSize: 13, color: C.text0, lineHeight: 19 },
+  paraDivider: { borderTopWidth: 1, borderTopColor: C.border, marginTop: 10, paddingTop: 10 },
   statsGrid:   { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 14 },
   statBox:     { flex: 1, backgroundColor: C.bg3, borderRadius: 12, paddingVertical: 10, alignItems: 'center' },
   statNum:     { fontSize: 17, fontWeight: '700' },
