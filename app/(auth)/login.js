@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import Svg, { Path } from 'react-native-svg';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -67,50 +68,20 @@ function RisingBubble({ size, left, duration, delay }) {
     return () => loop.stop();
   }, []);
 
-  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -200] });
+  const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [0, -150] });
   const translateX = progress.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 8, -4] });
-  const opacity = progress.interpolate({ inputRange: [0, 0.15, 0.8, 1], outputRange: [0, 0.5, 0.35, 0] });
+  const opacity = progress.interpolate({ inputRange: [0, 0.15, 0.8, 1], outputRange: [0, 0.9, 0.6, 0] });
 
   return (
     <Animated.View
       style={{
         position: 'absolute', bottom: 20, left,
         width: size, height: size, borderRadius: size / 2,
-        backgroundColor: 'rgba(255,255,255,0.5)',
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
+        backgroundColor: 'rgba(15,160,223,0.18)',
+        borderWidth: 1, borderColor: 'rgba(15,160,223,0.3)',
         opacity, transform: [{ translateY }, { translateX }],
       }}
     />
-  );
-}
-
-function WaveLayer({ amplitude, phaseOffset, opacity, color, duration }) {
-  const sway = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(sway, { toValue: 1, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(sway, { toValue: 0, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, []);
-
-  const translateX = sway.interpolate({ inputRange: [0, 1], outputRange: [-14 + phaseOffset, 14 + phaseOffset] });
-  const w = SCREEN_W;
-
-  return (
-    <Animated.View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, transform: [{ translateX }] }}>
-      <Svg width={w} height={28} viewBox={`0 0 ${w} 28`}>
-        <Path
-          d={`M0,14 Q${w * 0.25},${14 - amplitude} ${w * 0.5},14 T${w},14 V28 H0 Z`}
-          fill={color}
-          opacity={opacity}
-        />
-      </Svg>
-    </Animated.View>
   );
 }
 
@@ -122,6 +93,82 @@ function PressScale({ children, onPress, style, disabled }) {
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} onPressIn={pressIn} onPressOut={pressOut} disabled={disabled}>
       <Animated.View style={[style, { transform: [{ scale }] }]}>{children}</Animated.View>
     </TouchableOpacity>
+  );
+}
+
+// Sign In / Sign Up switch with a "water" thumb: it sloshes across with a
+// spring overshoot, stretches while it travels, ripples where it lands and
+// has a slow light shimmer moving through it like sun on water.
+function LiquidToggle({ mode, onChange }) {
+  const PAD = 5;
+  const [w, setW] = useState(0);
+  const [rippleSide, setRippleSide] = useState(mode === 'login' ? 0 : 1);
+  const pos     = useRef(new Animated.Value(mode === 'login' ? 0 : 1)).current;
+  const stretch = useRef(new Animated.Value(0)).current;
+  const ripple  = useRef(new Animated.Value(1)).current;
+  const shimmer = useRef(new Animated.Value(0)).current;
+  const half = w ? (w - PAD * 2) / 2 : 0;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(shimmer, { toValue: 1, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  const choose = (m) => {
+    if (m === mode) return;
+    const to = m === 'login' ? 0 : 1;
+    setRippleSide(to);
+    ripple.setValue(0);
+    onChange(m);
+    Animated.parallel([
+      Animated.spring(pos, { toValue: to, friction: 5, tension: 80, useNativeDriver: true }),
+      Animated.sequence([
+        Animated.timing(stretch, { toValue: 1, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.spring(stretch, { toValue: 0, friction: 3, tension: 110, useNativeDriver: true }),
+      ]),
+      Animated.timing(ripple, { toValue: 1, duration: 750, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+    ]).start();
+  };
+
+  const thumbX  = pos.interpolate({ inputRange: [0, 1], outputRange: [0, half] });
+  const scaleX  = stretch.interpolate({ inputRange: [0, 1], outputRange: [1, 1.2] });
+  const scaleY  = stretch.interpolate({ inputRange: [0, 1], outputRange: [1, 0.88] });
+  const waveX   = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-half * 0.5, half * 1.2] });
+  const rScale  = ripple.interpolate({ inputRange: [0, 1], outputRange: [0.2, 3.4] });
+  const rFade   = ripple.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.45, 0] });
+
+  return (
+    <View style={s.modeToggle} onLayout={e => setW(e.nativeEvent.layout.width)}>
+      {w > 0 && (
+        <>
+          {/* ripple, where the water lands */}
+          <Animated.View pointerEvents="none" style={{
+            position: 'absolute', top: PAD + 4, left: PAD + rippleSide * half + half / 2 - 22,
+            width: 44, height: 44, borderRadius: 22,
+            borderWidth: 2, borderColor: C.blue,
+            opacity: rFade, transform: [{ scale: rScale }],
+          }} />
+          {/* the liquid thumb */}
+          <Animated.View pointerEvents="none" style={[s.liquidThumb, {
+            width: half, left: PAD,
+            transform: [{ translateX: thumbX }, { scaleX }, { scaleY }],
+          }]}>
+            <Animated.View style={[s.liquidWave, { transform: [{ translateX: waveX }, { rotate: '18deg' }] }]} />
+            <Animated.View style={[s.liquidWave2, { transform: [{ translateX: waveX }, { rotate: '18deg' }] }]} />
+          </Animated.View>
+        </>
+      )}
+      {['login', 'signup'].map(m => (
+        <TouchableOpacity key={m} activeOpacity={1} style={s.modeBtn} onPress={() => choose(m)}>
+          <Text style={[s.modeBtnTxt, mode === m && s.modeBtnTxtActive]}>
+            {m === 'login' ? 'Sign In' : 'Sign Up'}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 }
 
@@ -340,25 +387,29 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={s.safe}>
+      {/* Light screen: dark status-bar icons (rest of the app has a navy header) */}
+      <StatusBar style="dark" />
       <KeyboardAvoidingView style={{ flex:1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={{ flexGrow:1 }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-          {/* Hero */}
+          {/* Brand */}
           <View style={s.hero}>
             {BUBBLES.map((b, i) => <RisingBubble key={i} {...b} />)}
-
             <View style={s.glowWrap}>
               <Animated.View style={[s.glow, { opacity: glowFade, transform: [{ scale: glowScale }] }]} />
               <Animated.View style={[s.logoWrap, { transform: [{ translateY: dropletY }, { scale: dropletScale }] }]}>
-                <View style={s.logoIcon}><AquaLogo size={88} /></View>
+                <View style={s.logoIcon}><AquaLogo size={84} /></View>
               </Animated.View>
             </View>
-
             <Text style={s.appName}>AquaSense UJ</Text>
-            <Text style={s.tagline}>SANS 241:2015 Water Quality Monitor</Text>
+            <Text style={s.tagline}>Campus water quality, live</Text>
+          </View>
 
-            {/* Safety check — replaces the old static pH/TDS/Turbidity/Temp chips */}
-            <Text style={s.safetyLabel}>Check water safety at your campus</Text>
+          {/* Campus + live status — one card, used by both Sign In and Sign Up */}
+          <View style={s.campusCard}>
+            <Text style={s.cardLabel}>
+              {mode === 'signup' ? 'Choose your campus' : 'Water safety at your campus'}
+            </Text>
             <View style={s.campusPickRow}>
               {CAMPUSES.map(c => (
                 <PressScale key={c} onPress={() => setCampus(c)} style={[s.campusPickChip, campus === c && s.campusPickChipActive]}>
@@ -366,10 +417,9 @@ export default function LoginScreen() {
                 </PressScale>
               ))}
             </View>
-
             <View style={s.statusRow}>
               {statusLoading ? (
-                <ActivityIndicator size="small" color="rgba(255,255,255,0.6)" />
+                <ActivityIndicator size="small" color={C.blue} />
               ) : (
                 <Animated.View style={[s.statusBadge, { opacity: statusFade, transform: [{ scale: statusScale }] }]}>
                   <View style={s.dotWrap}>
@@ -381,37 +431,21 @@ export default function LoginScreen() {
                 </Animated.View>
               )}
             </View>
-
-            <Text style={s.heroDesc}>Real-time drinking water monitoring across UJ campuses</Text>
-
-            {/* Gently swaying water-surface line where the hero meets the form */}
-            <WaveLayer amplitude={5}  phaseOffset={0}  opacity={0.10} color="#ffffff" duration={3200} />
-            <WaveLayer amplitude={7}  phaseOffset={10} opacity={0.06} color="#ffffff" duration={4000} />
+            {mode === 'signup' && (
+              <Text style={s.cardHint}>Your home screen opens on this campus. You can change it later in Settings.</Text>
+            )}
           </View>
 
           {/* Form */}
-          <Animated.View style={[s.form, { opacity: formFade }]}>
-            {/* Mode toggle */}
-            <View style={s.modeToggle}>
-              {['login','signup'].map(m => (
-                <PressScale key={m} onPress={() => switchMode(m)} style={[s.modeBtn, mode===m && s.modeBtnActive]}>
-                  <Text style={[s.modeBtnTxt, mode===m && s.modeBtnTxtActive]}>
-                    {m === 'login' ? 'Sign In' : 'Sign Up'}
-                  </Text>
-                </PressScale>
-              ))}
-            </View>
+          <LiquidToggle mode={mode} onChange={switchMode} />
 
-            <Text style={s.formTitle}>
-              {mode === 'login' ? 'Welcome back' : 'Join AquaSense UJ'}
-            </Text>
-
+          <Animated.View style={{ opacity: formFade }}>
             {/* Email */}
             <View style={s.inputWrap}>
-              <Text style={s.inputLabel}>{mode === 'signup' ? 'UJ Student Email' : 'Email'}</Text>
+              <Text style={s.inputLabel}>{mode === 'signup' ? 'UJ student email' : 'Email'}</Text>
               <TextInput
                 style={s.input}
-                placeholder={mode === 'signup' ? 'e.g. 12345678@student.uj.ac.za' : 'student@example.com'}
+                placeholder={mode === 'signup' ? '12345678@student.uj.ac.za' : 'student@example.com'}
                 placeholderTextColor={C.text2}
                 value={email} onChangeText={setEmail}
                 autoCapitalize="none" keyboardType="email-address"
@@ -423,33 +457,12 @@ export default function LoginScreen() {
               )}
             </View>
 
-            {/* Campus — sign-up only */}
-            {mode === 'signup' && (
-              <View style={s.inputWrap}>
-                <Text style={s.inputLabel}>Your Campus</Text>
-                <View style={s.formCampusRow}>
-                  {CAMPUSES.map(c => (
-                    <TouchableOpacity
-                      key={c}
-                      onPress={() => setCampus(c)}
-                      style={[s.formCampusChip, campus === c && s.formCampusChipOn]}
-                    >
-                      <Text style={[s.formCampusTxt, campus === c && s.formCampusTxtOn]}>{c}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <Text style={[s.hint, { color: C.text2 }]}>
-                  Your home screen will show this campus first. You can change it later in Settings.
-                </Text>
-              </View>
-            )}
-
             {/* Password */}
             <View style={s.inputWrap}>
               <Text style={s.inputLabel}>Password</Text>
               <View style={s.passRow}>
                 <TextInput
-                  style={[s.input, { flex:1, marginBottom:0, borderWidth:0 }]}
+                  style={[s.input, { flex:1, borderWidth:0 }]}
                   placeholder="••••••••"
                   placeholderTextColor={C.text2}
                   value={password} onChangeText={setPassword}
@@ -462,12 +475,11 @@ export default function LoginScreen() {
               </View>
 
               {mode === 'login' && (
-                <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'flex-end', marginTop: 8 }}>
+                <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: 'flex-end', marginTop: 10 }}>
                   <Text style={s.forgotTxt}>Forgot password?</Text>
                 </TouchableOpacity>
               )}
 
-              {/* Water-level password strength meter (signup only) */}
               {mode === 'signup' && password.length > 0 && (
                 <View style={s.strengthWrap}>
                   <View style={s.strengthTrack}>
@@ -496,28 +508,18 @@ export default function LoginScreen() {
             <PressScale onPress={handleAuth} disabled={loading} style={[s.submitBtn, loading && s.submitBtnDisabled]}>
               {loading
                 ? <ActivityIndicator color="white" />
-                : <Text style={s.submitBtnTxt}>
-                    {mode === 'login' ? 'Sign In →' : 'Create Account →'}
-                  </Text>
+                : <Text style={s.submitBtnTxt}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>
               }
             </PressScale>
 
             {mode === 'signup' && (
               <Text style={s.termsPreNote}>
-                By creating an account you'll be asked to accept our{' '}
+                By signing up you'll be asked to accept our{' '}
                 <Text style={{ color: C.blue, fontWeight: '600' }} onPress={() => router.push('/terms')}>
                   Terms & Conditions
                 </Text>.
               </Text>
             )}
-
-            <View style={s.noteBox}>
-              <Text style={s.noteTxt}>
-                📋 Monitoring against{' '}
-                <Text style={{ color:C.blue, fontWeight:'600' }}>SANS 241:2015</Text>
-                {' '}— South Africa's mandatory drinking water standard
-              </Text>
-            </View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -554,65 +556,61 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
+  // One background colour for the whole screen — no dark hero, no sheet
   safe:      { flex:1, backgroundColor:C.bg0 },
-  hero:      { backgroundColor:C.navy, padding:32, paddingTop:40, alignItems:'center', overflow:'hidden', position:'relative' },
+  scroll:    { flexGrow:1, paddingHorizontal:24, paddingTop:12, paddingBottom:40 },
 
-  glowWrap:  { width:88, height:88, alignItems:'center', justifyContent:'center', marginBottom:20 },
-  glow:      { position:'absolute', width:100, height:100, borderRadius:50, backgroundColor:'rgba(23,152,214,0.5)' },
-  logoWrap:  { width:88, height:88, alignItems:'center', justifyContent:'center' },
-  logoIcon:  { width:88, height:88, borderRadius:20, overflow:'hidden', shadowColor:'#000', shadowOpacity:0.15, shadowRadius:8, shadowOffset:{width:0,height:3}, elevation:4 },
-  appName:   { fontSize:30, fontWeight:'700', color:'#ffffff', letterSpacing:-0.8, marginBottom:6 },
-  tagline:   { fontSize:13, color:'rgba(255,255,255,0.6)', marginBottom:22 },
+  hero:      { alignItems:'center', paddingTop:16, paddingBottom:20, overflow:'hidden', position:'relative' },
+  glowWrap:  { width:84, height:84, alignItems:'center', justifyContent:'center', marginBottom:16 },
+  glow:      { position:'absolute', width:104, height:104, borderRadius:52, backgroundColor:'rgba(15,160,223,0.22)' },
+  logoWrap:  { width:84, height:84, alignItems:'center', justifyContent:'center' },
+  logoIcon:  { width:84, height:84, borderRadius:20, overflow:'hidden', shadowColor:C.navy, shadowOpacity:0.2, shadowRadius:10, shadowOffset:{width:0,height:4}, elevation:5 },
+  appName:   { fontSize:28, fontWeight:'800', color:C.navy, letterSpacing:-0.6, marginBottom:4 },
+  tagline:   { fontSize:13, color:C.text2 },
 
-  safetyLabel: { fontSize:11, fontWeight:'700', color:'rgba(255,255,255,0.55)', textTransform:'uppercase', letterSpacing:0.6, marginBottom:10 },
+  campusCard:{ backgroundColor:C.bg2, borderRadius:18, borderWidth:1, borderColor:C.border, padding:16, marginBottom:20, alignItems:'center' },
+  cardLabel: { fontSize:11, fontWeight:'700', color:C.text2, textTransform:'uppercase', letterSpacing:0.6, marginBottom:12 },
+  cardHint:  { fontSize:11, color:C.text2, textAlign:'center', marginTop:12, lineHeight:16 },
   campusPickRow: { flexDirection:'row', gap:8, marginBottom:14 },
-  campusPickChip:{ paddingHorizontal:14, paddingVertical:7, borderRadius:20, backgroundColor:'rgba(255,255,255,0.08)', borderWidth:1, borderColor:'rgba(255,255,255,0.15)' },
-  campusPickChipActive:{ backgroundColor:'rgba(15,160,223,0.35)', borderColor:'rgba(94,195,239,0.7)' },
-  campusPickTxt: { fontSize:12, fontWeight:'700', color:'rgba(255,255,255,0.6)' },
-  campusPickTxtActive:{ color:'#ffffff' },
+  campusPickChip:{ paddingHorizontal:14, paddingVertical:8, borderRadius:20, backgroundColor:C.bg3, borderWidth:1, borderColor:C.border },
+  campusPickChipActive:{ backgroundColor:'rgba(15,160,223,0.15)', borderColor:C.blue },
+  campusPickTxt: { fontSize:12, fontWeight:'700', color:C.text2 },
+  campusPickTxtActive:{ color:C.blue },
 
-  statusRow:   { height:30, justifyContent:'center', marginBottom:12 },
-  statusBadge: { flexDirection:'row', alignItems:'center', gap:8, backgroundColor:'rgba(255,255,255,0.08)', borderRadius:20, paddingHorizontal:14, paddingVertical:6, borderWidth:1, borderColor:'rgba(255,255,255,0.12)' },
+  statusRow:   { height:32, justifyContent:'center' },
+  statusBadge: { flexDirection:'row', alignItems:'center', gap:8, backgroundColor:C.bg0, borderRadius:20, paddingHorizontal:16, paddingVertical:7, borderWidth:1, borderColor:C.border },
   dotWrap:     { width:10, height:10, alignItems:'center', justifyContent:'center' },
   dot:         { width:8, height:8, borderRadius:4, position:'absolute' },
   pulseRing:   { width:8, height:8, borderRadius:4, borderWidth:1, position:'absolute' },
-  statusTxt:   { fontSize:12, fontWeight:'700' },
+  statusTxt:   { fontSize:13, fontWeight:'700' },
 
-  heroDesc:  { fontSize:13, color:'rgba(255,255,255,0.5)', textAlign:'center', marginBottom:8 },
-
-  form:      { backgroundColor:C.bg1, borderTopLeftRadius:28, borderTopRightRadius:28, padding:28, paddingBottom:40, flex:1, borderTopWidth:1, borderTopColor:C.border },
-  modeToggle:{ flexDirection:'row', backgroundColor:C.bg3, borderRadius:12, padding:3, marginBottom:20, borderWidth:1, borderColor:C.border },
-  modeBtn:   { flex:1, paddingVertical:9, alignItems:'center', borderRadius:10 },
-  modeBtnActive:{ backgroundColor:C.blue },
-  modeBtnTxt:{ fontSize:14, fontWeight:'600', color:C.text2 },
+  modeToggle:{ flexDirection:'row', backgroundColor:C.bg3, borderRadius:16, padding:5, marginBottom:22, borderWidth:1, borderColor:C.border, overflow:'hidden' },
+  modeBtn:   { flex:1, minHeight:46, alignItems:'center', justifyContent:'center' },
+  modeBtnTxt:{ fontSize:15, fontWeight:'700', color:C.text2 },
   modeBtnTxtActive:{ color:'white' },
-  formTitle: { fontSize:20, fontWeight:'700', color:C.text0, marginBottom:20, letterSpacing:-0.4 },
-  inputWrap: { marginBottom:14 },
+  liquidThumb:{ position:'absolute', top:5, bottom:5, borderRadius:12, backgroundColor:C.blue, overflow:'hidden', shadowColor:C.blue, shadowOpacity:0.35, shadowRadius:8, shadowOffset:{width:0,height:3}, elevation:3 },
+  liquidWave: { position:'absolute', top:-20, bottom:-20, width:26, backgroundColor:'rgba(255,255,255,0.16)' },
+  liquidWave2:{ position:'absolute', top:-20, bottom:-20, left:34, width:10, backgroundColor:'rgba(255,255,255,0.10)' },
+
+  inputWrap: { marginBottom:16 },
   inputLabel:{ fontSize:12, fontWeight:'600', color:C.text1, marginBottom:6 },
   input:     { backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, padding:14, fontSize:14, color:C.text0 },
   hint:      { fontSize:11, marginTop:6, fontWeight:'500' },
-  formCampusRow:    { flexDirection:'row', flexWrap:'wrap', gap:8 },
-  formCampusChip:   { paddingHorizontal:16, paddingVertical:9, borderRadius:20, backgroundColor:C.bg3, borderWidth:1, borderColor:C.border },
-  formCampusChipOn: { backgroundColor:'rgba(15,160,223,0.15)', borderColor:C.blue },
-  formCampusTxt:    { fontSize:13, fontWeight:'700', color:C.text2 },
-  formCampusTxtOn:  { color:C.blue },
   passRow:   { flexDirection:'row', alignItems:'center', backgroundColor:C.bg2, borderRadius:12, borderWidth:1, borderColor:C.border, overflow:'hidden' },
   showBtn:   { paddingHorizontal:14, justifyContent:'center' },
   showBtnTxt:{ fontSize:12, fontWeight:'600', color:C.blue },
   forgotTxt: { fontSize:12, fontWeight:'600', color:C.blue },
 
-  strengthWrap:  { marginTop:10 },
+  strengthWrap:  { marginTop:12 },
   strengthTrack: { height:6, backgroundColor:C.bg3, borderRadius:3, overflow:'hidden', marginBottom:8 },
   strengthFill:  { height:6, borderRadius:3 },
-  reqGrid:       { flexDirection:'row', flexWrap:'wrap', gap:8 },
+  reqGrid:       { flexDirection:'row', flexWrap:'wrap', gap:6 },
   reqTxt:        { fontSize:11, fontWeight:'600', width:'47%' },
 
-  submitBtn: { backgroundColor:C.blue, borderRadius:12, padding:16, alignItems:'center', marginTop:8, marginBottom:12 },
+  submitBtn: { backgroundColor:C.blue, borderRadius:14, padding:16, alignItems:'center', marginTop:4, marginBottom:14, shadowColor:C.blue, shadowOpacity:0.3, shadowRadius:10, shadowOffset:{width:0,height:4}, elevation:4 },
   submitBtnDisabled:{ opacity:0.7 },
-  submitBtnTxt:{ fontSize:15, fontWeight:'700', color:'white', letterSpacing:-0.3 },
-  termsPreNote:{ fontSize:11, color:C.text2, textAlign:'center', marginBottom:14, lineHeight:16 },
-  noteBox:   { backgroundColor:'rgba(15,160,223,0.06)', borderRadius:10, borderWidth:1, borderColor:'rgba(15,160,223,0.2)', padding:12 },
-  noteTxt:   { fontSize:12, color:C.text1, lineHeight:18, textAlign:'center' },
+  submitBtnTxt:{ fontSize:16, fontWeight:'700', color:'white', letterSpacing:-0.2 },
+  termsPreNote:{ fontSize:11, color:C.text2, textAlign:'center', lineHeight:16 },
 });
 
 const tm = StyleSheet.create({
